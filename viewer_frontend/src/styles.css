@@ -1,0 +1,246 @@
+:root {
+  color-scheme: dark;
+  --bg: #07111b;
+  --bg2: #0d1b2a;
+  --panel: rgba(12, 24, 37, 0.92);
+  --panel-2: rgba(18, 34, 52, 0.95);
+  --border: rgba(138, 163, 184, 0.18);
+  --text: #edf6ff;
+  --muted: #9eb3c8;
+  --accent: #ff7a59;
+  --accent-2: #2ec4b6;
+  --warn: #ffb703;
+  --good: #7bd389;
+  --bad: #ff6b6b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255, 122, 89, 0.18), transparent 28%),
+    radial-gradient(circle at top right, rgba(46, 196, 182, 0.15), transparent 24%),
+    linear-gradient(180deg, #08131f 0%, #050b12 100%);
+}
+
+input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.app-header h1 {
+  margin: 0.2rem 0 0;
+  font-size: clamp(2rem, 5vw, 3.6rem);
+  line-height: 0.95;
+}
+
+.eyebrow {
+  color: var(--accent-2);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.header-note {
+  max-width: 34rem;
+  color: var(--muted);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+  gap: 1.25rem;
+}
+
+.layout-left,
+.layout-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.panel,
+.chart-card,
+.summary-card {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+.panel,
+.chart-card {
+  padding: 1rem 1rem 1.1rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summary-card {
+  padding: 1rem;
+}
+
+.summary-label,
+.panel-header span {
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.summary-value {
+  margin-top: 0.45rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.summary-hint {
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.metric-positive .summary-value {
+  color: var(--good);
+}
+
+.metric-negative .summary-value {
+  color: var(--bad);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+
+.panel-header h2,
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.02rem;
+}
+
+.run-name {
+  font-weight: 600;
+}
+
+.run-subtitle {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-top: 0.2rem;
+}
+
+.table-wrap {
+  overflow: auto;
+}
+
+.runs-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.runs-table th,
+.runs-table td {
+  padding: 0.75rem 0.6rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.runs-table th {
+  position: sticky;
+  top: 0;
+  background: rgba(8, 18, 29, 0.98);
+  z-index: 1;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.runs-table tbody tr {
+  cursor: pointer;
+}
+
+.runs-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.selected-row {
+  background: rgba(255, 122, 89, 0.11);
+}
+
+.compact-table td,
+.compact-table th {
+  font-size: 0.86rem;
+}
+
+.filter-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.loading {
+  color: var(--muted);
+  padding: 1rem;
+}
+
+.error-banner {
+  margin-bottom: 1rem;
+  padding: 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 107, 107, 0.35);
+  background: rgba(255, 107, 107, 0.1);
+  color: #ffd6d6;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .app-shell {
+    padding: 1rem;
+  }
+
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

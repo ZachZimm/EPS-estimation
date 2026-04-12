@@ -10,9 +10,10 @@ import numpy as np
 import pandas as pd
 
 from database_helper import KairosDatabaseHelper
+from external_data import ExternalSeriesCache
 
 
-SEQUENCE_FEATURE_COLUMNS = [
+BASE_SEQUENCE_FEATURE_COLUMNS = [
     "return_1d",
     "return_5d",
     "return_20d",
@@ -81,6 +82,10 @@ class PrototypeConfig:
     residual_clip_mode: str = "none"
     residual_clip_lower_q: float = 0.01
     residual_clip_upper_q: float = 0.99
+    macro_cache_dir: str = "artifacts/external_cache"
+    fred_series: list[str] | None = None
+    market_context_tickers: list[str] | None = None
+    refresh_external_cache: bool = False
 
     @classmethod
     def from_path(cls, path: str | Path) -> "PrototypeConfig":
@@ -147,6 +152,131 @@ def _compute_market_features(ohlc_df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+def _context_prefix(name: str) -> str:
+    prefix = "".join(ch.lower() if ch.isalnum() else "_" for ch in name)
+    prefix = "_".join(part for part in prefix.split("_") if part)
+    return f"ctx_{prefix}"
+
+
+def _compute_context_market_features(name: str, frame: pd.DataFrame) -> tuple[pd.DataFrame, list[str], str]:
+    df = frame.copy()
+    df = df.sort_values("Date").reset_index(drop=True)
+    prefix = _context_prefix(name)
+    df["Close"] = pd.to_numeric(df["Close"], errors="coerce")
+    df[f"{prefix}_return_1d"] = df["Close"].pct_change()
+    df[f"{prefix}_return_5d"] = df["Close"].pct_change(5)
+    df[f"{prefix}_return_20d"] = df["Close"].pct_change(20)
+    df[f"{prefix}_volatility_20d"] = df[f"{prefix}_return_1d"].rolling(20, min_periods=5).std()
+    df[f"{prefix}_level_z60"] = (
+        (df["Close"] - df["Close"].rolling(60, min_periods=10).mean())
+        / df["Close"].rolling(60, min_periods=10).std()
+    )
+    df[f"{prefix}_rel_ema20"] = df["Close"] / df["Close"].ewm(span=20, adjust=False).mean() - 1.0
+    marker_column = f"{prefix}_source_date"
+    feature_columns = [
+        f"{prefix}_return_1d",
+        f"{prefix}_return_5d",
+        f"{prefix}_return_20d",
+        f"{prefix}_volatility_20d",
+        f"{prefix}_level_z60",
+        f"{prefix}_rel_ema20",
+    ]
+    output = df[["Date", *feature_columns]].copy()
+    output[marker_column] = output["Date"]
+    return output, feature_columns, marker_column
+
+
+def _compute_fred_daily_features(series_id: str, releases: pd.DataFrame) -> tuple[pd.DataFrame, list[str], str]:
+    frame = releases.copy()
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["realtime_start"] = pd.to_datetime(frame["realtime_start"], errors="coerce")
+    frame["value"] = pd.to_numeric(frame["value"], errors="coerce")
+    frame = frame.dropna(subset=["date", "realtime_start", "value"]).sort_values(
+        ["realtime_start", "date"]
+    )
+    if frame.empty:
+        return pd.DataFrame(columns=["Date"])
+
+    value_by_release_day = (
+        frame.sort_values(["realtime_start", "date"])
+        .drop_duplicates(subset=["realtime_start", "date"], keep="last")
+        .rename(columns={"realtime_start": "Date"})
+        [["Date", "value"]]
+    )
+    daily = (
+        value_by_release_day.groupby("Date", as_index=False)
+        .last()
+        .sort_values("Date")
+        .reset_index(drop=True)
+    )
+    prefix = _context_prefix(series_id)
+    daily[f"{prefix}_value"] = daily["value"]
+    daily[f"{prefix}_delta_1rel"] = daily["value"].diff(1)
+    daily[f"{prefix}_delta_4rel"] = daily["value"].diff(4)
+    daily[f"{prefix}_z60"] = (
+        (daily["value"] - daily["value"].rolling(12, min_periods=3).mean())
+        / daily["value"].rolling(12, min_periods=3).std()
+    )
+    feature_columns = [
+        f"{prefix}_value",
+        f"{prefix}_delta_1rel",
+        f"{prefix}_delta_4rel",
+        f"{prefix}_z60",
+    ]
+    marker_column = f"{prefix}_source_date"
+    output = daily[["Date", *feature_columns]].copy()
+    output[marker_column] = output["Date"]
+    return output, feature_columns, marker_column
+
+
+def _build_macro_feature_bundle(
+    config: PrototypeConfig,
+    env_file: str | Path,
+) -> tuple[pd.DataFrame, list[str], list[str]]:
+    cache = ExternalSeriesCache(env_file=env_file, cache_dir=config.macro_cache_dir)
+    frames: list[pd.DataFrame] = []
+    feature_columns: list[str] = []
+    marker_columns: list[str] = []
+
+    for series_id in config.fred_series or []:
+        daily, daily_features, marker_column = _compute_fred_daily_features(
+            series_id,
+            cache.get_fred_series(series_id, refresh=config.refresh_external_cache),
+        )
+        if daily.empty:
+            continue
+        frames.append(daily)
+        feature_columns.extend(daily_features)
+        marker_columns.append(marker_column)
+
+    for symbol in config.market_context_tickers or []:
+        daily, daily_features, marker_column = _compute_context_market_features(
+            symbol,
+            cache.get_market_series(symbol, refresh=config.refresh_external_cache),
+        )
+        if daily.empty:
+            continue
+        frames.append(daily)
+        feature_columns.extend(daily_features)
+        marker_columns.append(marker_column)
+
+    if not frames:
+        return pd.DataFrame(), [], []
+
+    merged = frames[0].sort_values("Date").reset_index(drop=True)
+    for frame in frames[1:]:
+        merged = pd.merge_ordered(
+            merged,
+            frame.sort_values("Date"),
+            on="Date",
+            how="outer",
+        )
+    merged = merged.sort_values("Date").reset_index(drop=True)
+    merged[feature_columns] = merged[feature_columns].ffill()
+    merged[marker_columns] = merged[marker_columns].ffill()
+    return merged, feature_columns, marker_columns
+
+
 def _compute_static_features(history: pd.DataFrame, target_row: pd.Series) -> dict[str, float]:
     previous_eps = history.sort_values("publishedDate")["BasicEPS"].tolist()
     last_four = previous_eps[-4:]
@@ -201,7 +331,11 @@ def _split_name(published_date: pd.Timestamp, config: PrototypeConfig) -> str:
 def build_event_dataset(
     helper: KairosDatabaseHelper,
     config: PrototypeConfig,
+    env_file: str | Path = ".env",
 ) -> tuple[pd.DataFrame, np.ndarray, np.ndarray, np.ndarray]:
+    macro_df, macro_feature_columns, macro_marker_columns = _build_macro_feature_bundle(config, env_file)
+    sequence_feature_columns = list(BASE_SEQUENCE_FEATURE_COLUMNS)
+
     metadata_rows: list[dict[str, Any]] = []
     sequence_rows: list[np.ndarray] = []
     static_rows: list[np.ndarray] = []
@@ -218,6 +352,32 @@ def build_event_dataset(
             continue
 
         ohlc_df = _compute_market_features(ohlc_df)
+        if not macro_df.empty:
+            ohlc_df = pd.merge_ordered(
+                ohlc_df.sort_values("Date"),
+                macro_df,
+                on="Date",
+                how="left",
+            )
+            ohlc_df[macro_feature_columns] = ohlc_df[macro_feature_columns].ffill()
+            ohlc_df[macro_marker_columns] = ohlc_df[macro_marker_columns].ffill()
+            derived_macro_columns: list[str] = []
+            for marker_column in macro_marker_columns:
+                base_prefix = marker_column[: -len("_source_date")]
+                available_column = f"{base_prefix}_available"
+                staleness_column = f"{base_prefix}_staleness_days"
+                ohlc_df[available_column] = ohlc_df[marker_column].notna().astype(float)
+                ohlc_df[staleness_column] = (
+                    (pd.to_datetime(ohlc_df["Date"]) - pd.to_datetime(ohlc_df[marker_column]))
+                    .dt.days.astype(float)
+                )
+                ohlc_df.loc[ohlc_df[available_column] == 0.0, staleness_column] = 9999.0
+                derived_macro_columns.extend([available_column, staleness_column])
+            sequence_feature_columns = (
+                list(BASE_SEQUENCE_FEATURE_COLUMNS)
+                + list(macro_feature_columns)
+                + derived_macro_columns
+            )
         eps_df = eps_df[(eps_df["periodType"] == "3M") & eps_df["BasicEPS"].notna()].copy()
         eps_df = eps_df.sort_values("publishedDate").reset_index(drop=True)
         if eps_df.empty:
@@ -230,7 +390,7 @@ def build_event_dataset(
                 continue
 
             market_window = market_history.tail(config.seq_len).copy()
-            if market_window[SEQUENCE_FEATURE_COLUMNS].isna().any().any():
+            if market_window[BASE_SEQUENCE_FEATURE_COLUMNS].isna().any().any():
                 continue
 
             prior_eps = eps_df.iloc[:idx].copy()
@@ -240,7 +400,7 @@ def build_event_dataset(
             )
 
             sequence_rows.append(
-                market_window[SEQUENCE_FEATURE_COLUMNS].to_numpy(dtype=np.float32)
+                market_window[sequence_feature_columns].to_numpy(dtype=np.float32)
             )
             static_rows.append(static_values)
             targets.append(float(row["BasicEPS"]))
@@ -265,6 +425,7 @@ def build_event_dataset(
     sequences = np.stack(sequence_rows).astype(np.float32)
     static = np.stack(static_rows).astype(np.float32)
     target_array = np.array(targets, dtype=np.float32)
+    metadata.attrs["sequence_feature_columns"] = sequence_feature_columns
     return metadata, sequences, static, target_array
 
 
@@ -272,6 +433,7 @@ def _fit_normalization(
     metadata: pd.DataFrame,
     sequences: np.ndarray,
     static: np.ndarray,
+    sequence_feature_columns: list[str],
 ) -> dict[str, list[float]]:
     train_idx = metadata.index[metadata["split"] == "train"].to_numpy()
     if len(train_idx) == 0:
@@ -289,7 +451,7 @@ def _fit_normalization(
     static_std = np.where(static_std < 1e-6, 1.0, static_std)
 
     return {
-        "sequence_feature_columns": SEQUENCE_FEATURE_COLUMNS,
+        "sequence_feature_columns": sequence_feature_columns,
         "static_feature_columns": STATIC_FEATURE_COLUMNS,
         "sequence_mean": seq_mean.tolist(),
         "sequence_std": seq_std.tolist(),
@@ -309,7 +471,11 @@ def save_dataset(
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    normalization = _fit_normalization(metadata, sequences, static)
+    sequence_feature_columns = metadata.attrs.get(
+        "sequence_feature_columns",
+        BASE_SEQUENCE_FEATURE_COLUMNS,
+    )
+    normalization = _fit_normalization(metadata, sequences, static, sequence_feature_columns)
 
     metadata.to_csv(output_path / "event_metadata.csv", index=False)
     np.savez_compressed(
@@ -348,7 +514,7 @@ def main() -> None:
     args = build_parser().parse_args()
     config = PrototypeConfig.from_path(args.config)
     helper = KairosDatabaseHelper(args.env_file)
-    metadata, sequences, static, targets = build_event_dataset(helper, config)
+    metadata, sequences, static, targets = build_event_dataset(helper, config, env_file=args.env_file)
     save_dataset(args.output_dir, config, metadata, sequences, static, targets)
     split_counts = metadata["split"].value_counts().to_dict()
     print(

@@ -1,3 +1,7 @@
 pandas
 numpy
 torch
+fredapi
+yfinance
+fastapi
+uvicorn
