@@ -5,3 +5,7 @@ fredapi
 yfinance
 fastapi
 uvicorn
+
+matplotlib
+scikit-learn
+umap-learn

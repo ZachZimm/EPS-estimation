@@ -212,6 +212,7 @@ class KairosDatabaseHelper:
         cik_map_path = self._env.get("KAIROS_COMPANY_TICKERS_PATH")
         self._cik_map_path = Path(cik_map_path).expanduser() if cik_map_path else _DEFAULT_CIK_MAP_PATH
         self._ticker_cik_map: dict[str, int] | None = None
+        self._table_columns_cache: dict[tuple[str, str], list[str]] = {}
 
     def _resolve_target(self, *, fund: bool) -> DbTarget:
         if fund:
@@ -269,6 +270,23 @@ class KairosDatabaseHelper:
             env={**os.environ, "PGPASSWORD": target.password, "PGTZ": "UTC"},
         )
         return list(csv.DictReader(io.StringIO(proc.stdout)))
+
+    def _get_table_columns(self, target: DbTarget, table_name: str) -> list[str]:
+        cache_key = (target.database, table_name)
+        if cache_key in self._table_columns_cache:
+            return self._table_columns_cache[cache_key]
+
+        sql = f"""
+            SELECT "column_name"
+            FROM "information_schema"."columns"
+            WHERE "table_schema" = 'public'
+              AND "table_name" = {_quote_literal(table_name)}
+            ORDER BY "ordinal_position" ASC
+        """
+        rows = self._run_csv_query(target, sql)
+        columns = [row["column_name"] for row in rows if row.get("column_name")]
+        self._table_columns_cache[cache_key] = columns
+        return columns
 
     def _load_ticker_cik_map(self) -> dict[str, int]:
         if self._ticker_cik_map is not None:
@@ -479,6 +497,114 @@ class KairosDatabaseHelper:
                 df[column] = pd.to_numeric(df[column], errors="coerce")
 
         return df.sort_values(["publishedDate", "asOfDate", "periodType"]).reset_index(drop=True)
+
+    def get_quarterly_table_dataframe(
+        self,
+        ticker: str,
+        table_suffix: str,
+        columns: Sequence[str] | None = None,
+        period_types: Sequence[str] = ("3M",),
+        start_date: dt.date | dt.datetime | str | None = None,
+        end_date: dt.date | dt.datetime | str | None = None,
+    ) -> pd.DataFrame:
+        table_name = f"{ticker.upper()}{table_suffix}"
+        available_columns = self._get_table_columns(self._fund_db, table_name)
+        if not available_columns:
+            return pd.DataFrame()
+
+        selected_columns = list(columns) if columns else list(available_columns)
+        if "asOfDate" in available_columns and "asOfDate" not in selected_columns:
+            selected_columns.insert(0, "asOfDate")
+        if "periodType" in available_columns and "periodType" not in selected_columns:
+            selected_columns.insert(1, "periodType")
+        selected_columns = [column for column in selected_columns if column in available_columns]
+        if not selected_columns:
+            return pd.DataFrame()
+
+        quoted_columns = ", ".join(_quote_identifier(column) for column in selected_columns)
+        where_parts: list[str] = []
+        valid_periods = [period.strip().upper() for period in period_types if period.strip()]
+        if "periodType" in selected_columns and valid_periods:
+            where_parts.append(f'"periodType" IN ({", ".join(_quote_literal(p) for p in valid_periods)})')
+        if start_date is not None:
+            normalized_start = _normalize_date(start_date)
+            if normalized_start:
+                where_parts.append(f'"asOfDate" >= {_quote_literal(normalized_start)}')
+        if end_date is not None:
+            normalized_end = _normalize_date(end_date)
+            if normalized_end:
+                where_parts.append(f'"asOfDate" <= {_quote_literal(normalized_end)}')
+
+        sql = f"""
+            SELECT {quoted_columns}
+            FROM {_quote_identifier(table_name)}
+            {"WHERE " + " AND ".join(where_parts) if where_parts else ""}
+            ORDER BY "asOfDate" ASC
+        """
+        rows = self._run_csv_query(self._fund_db, sql)
+        df = pd.DataFrame(rows)
+        if df.empty:
+            return df
+
+        if "asOfDate" in df.columns:
+            df["asOfDate"] = (
+                pd.to_datetime(df["asOfDate"], errors="coerce", utc=True)
+                .dt.tz_convert("UTC")
+                .dt.tz_localize(None)
+            )
+            publication_map = self.get_report_publication_dates(ticker=ticker, interval="q")
+            df["publishedDate"] = _build_published_date_series(
+                df["asOfDate"],
+                publication_map,
+                loose_match_days=50,
+                fallback_days=50,
+            )
+        if "periodType" in df.columns:
+            df["periodType"] = df["periodType"].astype(str)
+
+        for column in df.columns:
+            if column in {"asOfDate", "publishedDate", "periodType"}:
+                continue
+            df[column] = pd.to_numeric(df[column], errors="coerce")
+
+        published_start = pd.Timestamp(start_date).normalize() if start_date is not None else None
+        published_end = pd.Timestamp(end_date).normalize() if end_date is not None else None
+        if published_start is not None and "publishedDate" in df.columns:
+            df = df[df["publishedDate"] >= published_start]
+        if published_end is not None and "publishedDate" in df.columns:
+            df = df[df["publishedDate"] <= published_end]
+
+        sort_columns = [column for column in ["publishedDate", "asOfDate", "periodType"] if column in df.columns]
+        return df.sort_values(sort_columns).reset_index(drop=True)
+
+    def get_ticker_info(
+        self,
+        ticker: str,
+        columns: Sequence[str] = (
+            "Sector",
+            "SectorDisp",
+            "Industry",
+            "IndustryDisp",
+            "SectorKey",
+            "IndustryKey",
+        ),
+    ) -> dict[str, Any]:
+        table_name = f"{ticker.upper()}_info"
+        available_columns = self._get_table_columns(self._price_db, table_name)
+        if not available_columns:
+            return {}
+
+        selected_columns = [column for column in columns if column in available_columns]
+        if not selected_columns:
+            return {}
+
+        sql = f"""
+            SELECT {", ".join(_quote_identifier(column) for column in selected_columns)}
+            FROM {_quote_identifier(table_name)}
+            LIMIT 1
+        """
+        rows = self._run_csv_query(self._price_db, sql)
+        return rows[0] if rows else {}
 
     def get_merged_ohlc_eps_dataframe(
         self,
