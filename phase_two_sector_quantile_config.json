@@ -135,5 +135,21 @@
     "^VVIX",
     "^TNX"
   ],
-  "sector_modeling_mode": "global"
+  "use_pre_release_fundamentals": true,
+  "sector_modeling_mode": "per_sector",
+  "sector_min_train_samples": 250,
+  "sector_fallback_bucket": "OTHER",
+  "baseline_family": [
+    "baseline_persistence",
+    "baseline_seasonal_naive",
+    "baseline_trailing_mean",
+    "baseline_trend",
+    "baseline_sector_peer_median"
+  ],
+  "prediction_objective": "quantile",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ]
 }

@@ -171,6 +171,8 @@ class PrototypeConfig:
     sector_min_train_samples: int = 250
     sector_fallback_bucket: str = "OTHER"
     baseline_family: list[str] = field(default_factory=lambda: list(BASELINE_COLUMNS))
+    prediction_objective: str = "point"
+    quantiles: list[float] = field(default_factory=lambda: [0.1, 0.5, 0.9])
     volatility_trim_enabled: bool = False
     volatility_trim_fraction: float = 0.0
     volatility_trim_min_history: int = 252
@@ -188,6 +190,10 @@ class PrototypeConfig:
             }
         if "baseline_family" not in payload or payload["baseline_family"] is None:
             payload["baseline_family"] = list(BASELINE_COLUMNS)
+        if "prediction_objective" not in payload or payload["prediction_objective"] is None:
+            payload["prediction_objective"] = "point"
+        if "quantiles" not in payload or payload["quantiles"] is None:
+            payload["quantiles"] = [0.1, 0.5, 0.9]
         return cls(**payload)
 
 

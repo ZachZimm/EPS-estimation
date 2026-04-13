@@ -135,5 +135,14 @@
     "^VVIX",
     "^TNX"
   ],
-  "sector_modeling_mode": "global"
+  "volatility_trim_enabled": true,
+  "volatility_trim_fraction": 0.1,
+  "volatility_trim_min_history": 252,
+  "sector_modeling_mode": "global",
+  "prediction_objective": "quantile",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ]
 }

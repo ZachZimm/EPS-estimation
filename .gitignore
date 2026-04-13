@@ -4,3 +4,4 @@ __pycache__/
 artifacts/
 viewer_frontend/node_modules/
 .codex
+run_quantile_suite.sh

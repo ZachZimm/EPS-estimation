@@ -223,6 +223,7 @@ class SequenceRegressor(nn.Module):
         model_type: str,
         pooling: str,
         ticker_embedding_dim: int,
+        output_dim: int = 1,
     ) -> None:
         super().__init__()
         if model_type == "transformer":
@@ -244,6 +245,7 @@ class SequenceRegressor(nn.Module):
         )
         self.ticker_embedding = nn.Embedding(num_tickers, ticker_embedding_dim)
         head_input_dim = sequence_out_dim + d_model + ticker_embedding_dim
+        self.output_dim = output_dim
         self.head = nn.Sequential(
             nn.Linear(head_input_dim, hidden_dim),
             nn.GELU(),
@@ -251,14 +253,17 @@ class SequenceRegressor(nn.Module):
             nn.Linear(hidden_dim, hidden_dim // 2),
             nn.GELU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim // 2, 1),
+            nn.Linear(hidden_dim // 2, output_dim),
         )
 
     def forward(self, sequence: torch.Tensor, static: torch.Tensor, ticker_id: torch.Tensor) -> torch.Tensor:
         seq_emb = self.sequence_encoder(sequence)
         static_emb = self.static_proj(static)
         ticker_emb = self.ticker_embedding(ticker_id)
-        return self.head(torch.cat([seq_emb, static_emb, ticker_emb], dim=-1)).squeeze(-1)
+        out = self.head(torch.cat([seq_emb, static_emb, ticker_emb], dim=-1))
+        if self.output_dim == 1:
+            return out.squeeze(-1)
+        return out
 
 
 def _train_source_idx(bundle: DatasetBundle) -> np.ndarray:
@@ -397,6 +402,34 @@ def inverse_transform_prediction(prediction: torch.Tensor, baseline: torch.Tenso
     raise ValueError(f"Unsupported target_mode: {mode}")
 
 
+def _quantile_tensor(config: PrototypeConfig, device: torch.device, dtype: torch.dtype) -> torch.Tensor:
+    quantiles = getattr(config, "quantiles", None) or [0.1, 0.5, 0.9]
+    return torch.tensor([float(q) for q in quantiles], device=device, dtype=dtype)
+
+
+def _point_prediction_from_output(output: torch.Tensor, config: PrototypeConfig) -> torch.Tensor:
+    if getattr(config, "prediction_objective", "point") != "quantile":
+        return output
+    quantiles = [float(q) for q in (getattr(config, "quantiles", None) or [0.1, 0.5, 0.9])]
+    if not quantiles:
+        raise ValueError("Quantile objective requires at least one quantile.")
+    median_idx = min(range(len(quantiles)), key=lambda i: abs(quantiles[i] - 0.5))
+    return output[:, median_idx]
+
+
+def _sorted_quantile_output(output: torch.Tensor, config: PrototypeConfig) -> torch.Tensor:
+    if getattr(config, "prediction_objective", "point") != "quantile":
+        return output
+    return torch.sort(output, dim=-1).values
+
+
+def _quantile_loss(prediction: torch.Tensor, target: torch.Tensor, quantiles: torch.Tensor) -> torch.Tensor:
+    target_2d = target.unsqueeze(-1)
+    errors = target_2d - prediction
+    losses = torch.maximum((quantiles - 1.0) * errors, quantiles * errors)
+    return losses.mean()
+
+
 def apply_tail_hardening(
     prediction: torch.Tensor,
     baseline: torch.Tensor,
@@ -406,26 +439,37 @@ def apply_tail_hardening(
     residual_clip_mode: str,
 ) -> torch.Tensor:
     hardened = prediction.clone()
+    baseline_expanded = baseline.unsqueeze(-1) if hardened.ndim > 1 else baseline
     if residual_clip_mode != "none":
-        residual = hardened - baseline
+        residual = hardened - baseline_expanded
         valid_baseline = torch.isfinite(baseline)
+        valid_baseline_expanded = valid_baseline.unsqueeze(-1) if hardened.ndim > 1 else valid_baseline
         if residual_clip_mode == "global":
             clipped = torch.clamp(residual, min=target_preprocessor.global_delta_lower, max=target_preprocessor.global_delta_upper)
-            residual = torch.where(valid_baseline, clipped, residual)
+            residual = torch.where(valid_baseline_expanded, clipped, residual)
         elif residual_clip_mode == "per_ticker":
             lower = torch.tensor([target_preprocessor.ticker_delta_lower.get(int(x), target_preprocessor.global_delta_lower) for x in ticker_id.cpu().tolist()], dtype=prediction.dtype, device=prediction.device)
             upper = torch.tensor([target_preprocessor.ticker_delta_upper.get(int(x), target_preprocessor.global_delta_upper) for x in ticker_id.cpu().tolist()], dtype=prediction.dtype, device=prediction.device)
+            if hardened.ndim > 1:
+                lower = lower.unsqueeze(-1)
+                upper = upper.unsqueeze(-1)
             clipped = torch.minimum(torch.maximum(residual, lower), upper)
-            residual = torch.where(valid_baseline, clipped, residual)
+            residual = torch.where(valid_baseline_expanded, clipped, residual)
         else:
             raise ValueError(f"Unsupported residual_clip_mode: {residual_clip_mode}")
-        candidate = baseline + residual
-        hardened = torch.where(valid_baseline, candidate, hardened)
+        candidate = baseline_expanded + residual
+        hardened = torch.where(valid_baseline_expanded, candidate, hardened)
     if min_train_samples_for_model > 0:
         train_counts = torch.tensor([target_preprocessor.ticker_train_counts.get(int(x), 0) for x in ticker_id.cpu().tolist()], dtype=prediction.dtype, device=prediction.device)
         use_baseline = train_counts < float(min_train_samples_for_model)
         valid_baseline = torch.isfinite(baseline)
-        hardened = torch.where((use_baseline.bool() & valid_baseline), baseline, hardened)
+        if hardened.ndim > 1:
+            use_baseline = use_baseline.unsqueeze(-1)
+            valid_baseline = valid_baseline.unsqueeze(-1)
+            baseline_for_where = baseline.unsqueeze(-1)
+        else:
+            baseline_for_where = baseline
+        hardened = torch.where((use_baseline.bool() & valid_baseline), baseline_for_where, hardened)
     return hardened
 
 
@@ -468,6 +512,7 @@ def run_epoch(
     optimizer: torch.optim.Optimizer | None,
     device: torch.device,
     target_preprocessor: TargetPreprocessor,
+    config: PrototypeConfig,
 ) -> tuple[float, float, float]:
     training = optimizer is not None
     model.train(training)
@@ -475,6 +520,7 @@ def run_epoch(
     losses: list[float] = []
     abs_errors: list[float] = []
     sq_errors: list[float] = []
+    quantile_tensor: torch.Tensor | None = None
     for batch in loader:
         sequence = batch["sequence"].to(device)
         static = batch["static"].to(device)
@@ -483,14 +529,23 @@ def run_epoch(
         target = batch["target"].to(device)
         normalized_target = transform_target(target, baseline, ticker_id, target_preprocessor)
         with torch.set_grad_enabled(training):
-            normalized_prediction = model(sequence, static, ticker_id)
-            loss = criterion(normalized_prediction, normalized_target)
+            raw_output = model(sequence, static, ticker_id)
+            if config.prediction_objective == "quantile":
+                normalized_prediction = _sorted_quantile_output(raw_output, config)
+                if quantile_tensor is None:
+                    quantile_tensor = _quantile_tensor(config, normalized_prediction.device, normalized_prediction.dtype)
+                loss = _quantile_loss(normalized_prediction, normalized_target, quantile_tensor)
+                point_prediction_norm = _point_prediction_from_output(normalized_prediction, config)
+            else:
+                normalized_prediction = raw_output
+                loss = criterion(normalized_prediction, normalized_target)
+                point_prediction_norm = normalized_prediction
             if training:
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
         losses.append(float(loss.item()))
-        prediction = inverse_transform_prediction(normalized_prediction.detach(), baseline, ticker_id, target_preprocessor)
+        prediction = inverse_transform_prediction(point_prediction_norm.detach(), baseline, ticker_id, target_preprocessor)
         diff = (prediction - target).cpu().numpy()
         abs_errors.extend(np.abs(diff).tolist())
         sq_errors.extend(np.square(diff).tolist())
@@ -501,18 +556,39 @@ def run_epoch(
     )
 
 
-def predict_split(model: nn.Module, dataset: EpsSequenceDataset, device: torch.device, target_preprocessor: TargetPreprocessor) -> np.ndarray:
+def predict_split(
+    model: nn.Module,
+    dataset: EpsSequenceDataset,
+    device: torch.device,
+    target_preprocessor: TargetPreprocessor,
+    config: PrototypeConfig,
+) -> tuple[np.ndarray, dict[str, np.ndarray]]:
     loader = DataLoader(dataset, batch_size=128, shuffle=False)
     model.eval()
     predictions: list[np.ndarray] = []
+    quantile_predictions: dict[str, list[np.ndarray]] = {}
+    quantiles = [float(q) for q in (getattr(config, "quantiles", None) or [0.1, 0.5, 0.9])]
     with torch.no_grad():
         for batch in loader:
             baseline = batch["baseline"].to(device)
             ticker_id = batch["ticker_id"].to(device)
-            pred = model(batch["sequence"].to(device), batch["static"].to(device), ticker_id)
-            pred = inverse_transform_prediction(pred, baseline, ticker_id, target_preprocessor)
-            predictions.append(pred.cpu().numpy())
-    return np.concatenate(predictions) if predictions else np.array([], dtype=np.float32)
+            raw_output = model(batch["sequence"].to(device), batch["static"].to(device), ticker_id)
+            if config.prediction_objective == "quantile":
+                normalized_prediction = _sorted_quantile_output(raw_output, config)
+                restored_quantiles = inverse_transform_prediction(normalized_prediction, baseline.unsqueeze(-1), ticker_id, target_preprocessor)
+                point_prediction = _point_prediction_from_output(restored_quantiles, config)
+                for idx, quantile in enumerate(quantiles):
+                    key = f"q{int(round(quantile * 100)):02d}"
+                    quantile_predictions.setdefault(key, []).append(restored_quantiles[:, idx].cpu().numpy())
+            else:
+                point_prediction = inverse_transform_prediction(raw_output, baseline, ticker_id, target_preprocessor)
+            predictions.append(point_prediction.cpu().numpy())
+    merged_quantiles = {
+        key: np.concatenate(values) if values else np.array([], dtype=np.float32)
+        for key, values in quantile_predictions.items()
+    }
+    point_array = np.concatenate(predictions) if predictions else np.array([], dtype=np.float32)
+    return point_array, merged_quantiles
 
 
 def _sanitize_slug(text: str) -> str:
@@ -523,13 +599,35 @@ def _sanitize_slug(text: str) -> str:
 def _compute_prediction_metrics(frame: pd.DataFrame) -> dict[str, float]:
     diff = pd.to_numeric(frame["prediction"], errors="coerce") - pd.to_numeric(frame["actual"], errors="coerce")
     diff = diff.dropna()
-    if diff.empty:
-        return {"mae": math.nan, "rmse": math.nan, "count": 0}
-    return {
-        "mae": float(np.mean(np.abs(diff))),
-        "rmse": float(np.sqrt(np.mean(np.square(diff)))),
-        "count": int(len(diff)),
+    metrics = {
+        "mae": math.nan,
+        "rmse": math.nan,
+        "count": 0,
     }
+    if not diff.empty:
+        metrics.update(
+            {
+                "mae": float(np.mean(np.abs(diff))),
+                "rmse": float(np.sqrt(np.mean(np.square(diff)))),
+                "count": int(len(diff)),
+            }
+        )
+    q10_col = "prediction_q10"
+    q90_col = "prediction_q90"
+    if q10_col in frame.columns and q90_col in frame.columns:
+        interval = frame[[q10_col, q90_col, "actual"]].copy()
+        interval[q10_col] = pd.to_numeric(interval[q10_col], errors="coerce")
+        interval[q90_col] = pd.to_numeric(interval[q90_col], errors="coerce")
+        interval["actual"] = pd.to_numeric(interval["actual"], errors="coerce")
+        interval = interval.dropna()
+        if not interval.empty:
+            lower = np.minimum(interval[q10_col].to_numpy(dtype=float), interval[q90_col].to_numpy(dtype=float))
+            upper = np.maximum(interval[q10_col].to_numpy(dtype=float), interval[q90_col].to_numpy(dtype=float))
+            actual = interval["actual"].to_numpy(dtype=float)
+            covered = (actual >= lower) & (actual <= upper)
+            metrics["interval_80_coverage"] = float(np.mean(covered))
+            metrics["interval_80_width"] = float(np.mean(upper - lower))
+    return metrics
 
 
 def train_single_model(bundle: DatasetBundle, config: PrototypeConfig, output_dir: Path) -> tuple[dict[str, Any], pd.DataFrame]:
@@ -561,6 +659,7 @@ def train_single_model(bundle: DatasetBundle, config: PrototypeConfig, output_di
         model_type=config.model_type,
         pooling=config.pooling,
         ticker_embedding_dim=config.ticker_embedding_dim,
+        output_dim=len(config.quantiles) if config.prediction_objective == "quantile" else 1,
     ).to(device)
     train_loader = DataLoader(train_ds, batch_size=config.batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=config.batch_size, shuffle=False)
@@ -585,8 +684,8 @@ def train_single_model(bundle: DatasetBundle, config: PrototypeConfig, output_di
     epochs_without_improvement = 0
     stopped_early = False
     for epoch in range(1, config.epochs + 1):
-        train_loss, train_mae, train_rmse = run_epoch(model, train_loader, optimizer, device, target_preprocessor)
-        val_loss, val_mae, val_rmse = run_epoch(model, val_loader, None, device, target_preprocessor)
+        train_loss, train_mae, train_rmse = run_epoch(model, train_loader, optimizer, device, target_preprocessor, config)
+        val_loss, val_mae, val_rmse = run_epoch(model, val_loader, None, device, target_preprocessor, config)
         history.append(
             {
                 "epoch": epoch,
@@ -616,7 +715,7 @@ def train_single_model(bundle: DatasetBundle, config: PrototypeConfig, output_di
     torch.save(best_state, checkpoint_path)
     model.load_state_dict(best_state["model_state_dict"])
 
-    test_predictions = predict_split(model, test_ds, device, target_preprocessor)
+    test_predictions, test_quantiles = predict_split(model, test_ds, device, target_preprocessor, config)
     test_actuals = test_ds.targets
     test_baseline = pd.to_numeric(test_ds.metadata.get("baseline_persistence", test_ds.metadata.get("last_prior_eps")), errors="coerce").to_numpy(dtype=np.float32)
     test_ticker_id = test_ds.metadata["ticker_id"].to_numpy(dtype=np.int64)
@@ -631,16 +730,43 @@ def train_single_model(bundle: DatasetBundle, config: PrototypeConfig, output_di
         config.cold_start_baseline_min_train_samples,
         config.residual_clip_mode,
     ).cpu().numpy()
+    if config.prediction_objective == "quantile" and test_quantiles:
+        ordered_keys = sorted(test_quantiles.keys())
+        quantile_tensor = torch.tensor(
+            np.column_stack([test_quantiles[key] for key in ordered_keys]), dtype=torch.float32
+        )
+        quantile_tensor = apply_tail_hardening(
+            quantile_tensor,
+            test_baseline_tensor,
+            test_ticker_tensor,
+            target_preprocessor,
+            config.cold_start_baseline_min_train_samples,
+            config.residual_clip_mode,
+        ).cpu().numpy()
+        quantile_tensor = np.sort(quantile_tensor, axis=1)
+        test_quantiles = {key: quantile_tensor[:, idx] for idx, key in enumerate(ordered_keys)}
     alpha = float(config.prediction_blend_alpha)
     if alpha != 1.0:
         valid_baseline = np.isfinite(test_baseline)
         blended = test_predictions.copy()
         blended[valid_baseline] = alpha * test_predictions[valid_baseline] + (1.0 - alpha) * test_baseline[valid_baseline]
         test_predictions = blended
+        for key, values in list(test_quantiles.items()):
+            adjusted = values.copy()
+            adjusted[valid_baseline] = alpha * adjusted[valid_baseline] + (1.0 - alpha) * test_baseline[valid_baseline]
+            test_quantiles[key] = adjusted
 
     test_metadata = test_ds.metadata.copy()
     test_metadata["prediction"] = test_predictions
     test_metadata["actual"] = test_actuals
+    if config.prediction_objective == "quantile":
+        ordered_keys = sorted(test_quantiles.keys())
+        quantile_matrix = None
+        if ordered_keys:
+            quantile_matrix = np.column_stack([test_quantiles[key] for key in ordered_keys])
+            quantile_matrix = np.sort(quantile_matrix, axis=1)
+            for idx, key in enumerate(ordered_keys):
+                test_metadata[f"prediction_{key}"] = quantile_matrix[:, idx]
     selected_baseline = select_best_baseline(bundle.metadata, split="val")
     selected_baseline_name = selected_baseline["name"]
     if selected_baseline_name and selected_baseline_name in test_metadata.columns:
@@ -656,9 +782,13 @@ def train_single_model(bundle: DatasetBundle, config: PrototypeConfig, output_di
         "epochs_completed": int(len(history)),
         "model_type": config.model_type,
         "optimizer": config.optimizer,
+        "prediction_objective": config.prediction_objective,
+        "quantiles": list(config.quantiles),
         "val_mae": float(best_val_mae),
         "test_mae": float(test_metrics["mae"]),
         "test_rmse": float(test_metrics["rmse"]),
+        "interval_80_coverage": test_metrics.get("interval_80_coverage"),
+        "interval_80_width": test_metrics.get("interval_80_width"),
         "val_baselines": evaluate_baselines(bundle.metadata, "val"),
         "test_baselines": evaluate_baselines(bundle.metadata, "test"),
         "selected_val_baseline": selected_baseline_name,
@@ -725,9 +855,13 @@ def train_per_sector(bundle: DatasetBundle, config: PrototypeConfig, output_dir:
     pd.DataFrame(sector_metrics_rows).sort_values("test_mae").to_csv(output_dir / "sector_metrics.csv", index=False)
     metrics = {
         "mode": "per_sector",
+        "prediction_objective": config.prediction_objective,
+        "quantiles": list(config.quantiles),
         "num_sector_models": int(len(sector_metrics_rows)),
         "test_mae": float(aggregate_metrics["mae"]),
         "test_rmse": float(aggregate_metrics["rmse"]),
+        "interval_80_coverage": aggregate_metrics.get("interval_80_coverage"),
+        "interval_80_width": aggregate_metrics.get("interval_80_width"),
         "test_count": int(aggregate_metrics["count"]),
         "test_baselines": aggregate_baselines,
         "val_baseline_selection_by_sector": val_baseline_summary,
