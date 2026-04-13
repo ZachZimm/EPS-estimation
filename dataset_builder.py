@@ -173,6 +173,9 @@ class PrototypeConfig:
     baseline_family: list[str] = field(default_factory=lambda: list(BASELINE_COLUMNS))
     prediction_objective: str = "point"
     quantiles: list[float] = field(default_factory=lambda: [0.1, 0.5, 0.9])
+    linear_include_ticker_fixed_effects: bool = True
+    linear_fit_intercept: bool = True
+    linear_quantile_alpha: float = 1e-4
     volatility_trim_enabled: bool = False
     volatility_trim_fraction: float = 0.0
     volatility_trim_min_history: int = 252
@@ -909,7 +912,7 @@ def save_dataset(
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Build a leak-free EPS event dataset.")
-    parser.add_argument("--config", default="prototype_config.json", help="Path to config JSON.")
+    parser.add_argument("--config", default="configs/prototype_config.json", help="Path to config JSON.")
     parser.add_argument("--env-file", default=".env", help="Path to env file.")
     parser.add_argument(
         "--output-dir",

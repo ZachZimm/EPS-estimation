@@ -224,6 +224,41 @@ class CnnSequenceEncoder(nn.Module):
         return x.mean(dim=-1)
 
 
+class LinearSequenceRegressor(nn.Module):
+    def __init__(
+        self,
+        seq_dim: int,
+        static_dim: int,
+        num_tickers: int,
+        seq_len: int,
+        hidden_dim: int,
+        dropout: float,
+        ticker_embedding_dim: int,
+        output_dim: int = 1,
+    ) -> None:
+        super().__init__()
+        self.output_dim = output_dim
+        self.ticker_embedding = nn.Embedding(num_tickers, ticker_embedding_dim)
+        input_dim = (seq_dim * seq_len) + static_dim + ticker_embedding_dim
+        self.head = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, output_dim),
+        )
+
+    def forward(self, sequence: torch.Tensor, static: torch.Tensor, ticker_id: torch.Tensor) -> torch.Tensor:
+        sequence_flat = sequence.reshape(sequence.shape[0], -1)
+        ticker_emb = self.ticker_embedding(ticker_id)
+        out = self.head(torch.cat([sequence_flat, static, ticker_emb], dim=-1))
+        if self.output_dim == 1:
+            return out.squeeze(-1)
+        return out
+
+
 class SequenceRegressor(nn.Module):
     def __init__(
         self,
@@ -242,6 +277,23 @@ class SequenceRegressor(nn.Module):
         output_dim: int = 1,
     ) -> None:
         super().__init__()
+        if model_type == "linear":
+            self.linear_model = LinearSequenceRegressor(
+                seq_dim=seq_dim,
+                static_dim=static_dim,
+                num_tickers=num_tickers,
+                seq_len=max_len,
+                hidden_dim=hidden_dim,
+                dropout=dropout,
+                ticker_embedding_dim=ticker_embedding_dim,
+                output_dim=output_dim,
+            )
+            self.output_dim = output_dim
+            self.sequence_encoder = None
+            self.static_proj = None
+            self.ticker_embedding = None
+            self.head = None
+            return
         if model_type == "transformer":
             self.sequence_encoder = TransformerSequenceEncoder(seq_dim, d_model, num_heads, num_layers, dropout, hidden_dim, max_len, pooling)
             sequence_out_dim = d_model
@@ -276,6 +328,8 @@ class SequenceRegressor(nn.Module):
         )
 
     def forward(self, sequence: torch.Tensor, static: torch.Tensor, ticker_id: torch.Tensor) -> torch.Tensor:
+        if hasattr(self, "linear_model") and self.linear_model is not None:
+            return self.linear_model(sequence, static, ticker_id)
         seq_emb = self.sequence_encoder(sequence)
         static_emb = self.static_proj(static)
         ticker_emb = self.ticker_embedding(ticker_id)
@@ -891,7 +945,7 @@ def train_per_sector(bundle: DatasetBundle, config: PrototypeConfig, output_dir:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Train a transformer on the EPS prototype dataset.")
-    parser.add_argument("--config", default="prototype_config.json", help="Path to config JSON.")
+    parser.add_argument("--config", default="configs/prototype_config.json", help="Path to config JSON.")
     parser.add_argument("--dataset-dir", default="artifacts/prototype_dataset", help="Directory containing dataset artifacts.")
     parser.add_argument("--output-dir", default="artifacts/prototype_training", help="Directory for checkpoints and metrics.")
     return parser

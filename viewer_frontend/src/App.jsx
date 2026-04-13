@@ -47,8 +47,8 @@ function RunsTable({ runs, selectedRunId, onSelectRun }) {
           <thead>
             <tr>
               <th>Run</th>
+              <th>Mode</th>
               <th>Test MAE</th>
-              <th>Test RMSE</th>
               <th>Baseline MAE</th>
               <th>Tickers</th>
               <th>Predictions</th>
@@ -64,11 +64,12 @@ function RunsTable({ runs, selectedRunId, onSelectRun }) {
                 <td>
                   <div className="run-name">{run.name}</div>
                   <div className="run-subtitle">
-                    {run.model_type} / {run.optimizer}
+                    {run.model_type || "unknown"}
+                    {run.optimizer ? ` / ${run.optimizer}` : ""}
                   </div>
                 </td>
+                <td>{run.has_sector_breakdown ? `per-sector (${run.sector_count})` : "single"}</td>
                 <td>{formatNumber(run.test_mae)}</td>
-                <td>{formatNumber(run.test_rmse)}</td>
                 <td>{formatNumber(run.baseline_test_mae)}</td>
                 <td>{run.ticker_count ?? "NA"}</td>
                 <td>{run.prediction_count ?? "NA"}</td>
@@ -82,6 +83,17 @@ function RunsTable({ runs, selectedRunId, onSelectRun }) {
 }
 
 function TrainingHistoryChart({ history }) {
+  if (!history?.length) {
+    return (
+      <div className="chart-card">
+        <div className="panel-header">
+          <h3>Training History</h3>
+        </div>
+        <div className="loading">No epoch history was saved for this run.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="chart-card">
       <div className="panel-header">
@@ -96,7 +108,9 @@ function TrainingHistoryChart({ history }) {
           <Legend />
           <Line type="monotone" dataKey="train_mae" stroke="#ff7a59" dot={false} strokeWidth={2} />
           <Line type="monotone" dataKey="val_mae" stroke="#2ec4b6" dot={false} strokeWidth={2} />
-          <Line type="monotone" dataKey="lr" stroke="#8ecae6" dot={false} strokeWidth={1.5} />
+          {history.some((row) => row.lr !== null && row.lr !== undefined) ? (
+            <Line type="monotone" dataKey="lr" stroke="#8ecae6" dot={false} strokeWidth={1.5} />
+          ) : null}
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -104,6 +118,17 @@ function TrainingHistoryChart({ history }) {
 }
 
 function PredictionScatter({ rows }) {
+  if (!rows?.length) {
+    return (
+      <div className="chart-card">
+        <div className="panel-header">
+          <h3>Prediction Scatter</h3>
+        </div>
+        <div className="loading">No prediction summary is available for this run.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="chart-card">
       <div className="panel-header">
@@ -149,6 +174,43 @@ function TickerTable({ rows }) {
                 <td>{formatNumber(row.rmse)}</td>
                 <td>{formatNumber(row.mean_prediction)}</td>
                 <td>{formatNumber(row.mean_actual)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function SectorTable({ rows }) {
+  if (!rows?.length) return null;
+  return (
+    <div className="panel">
+      <div className="panel-header">
+        <h3>Sector Results</h3>
+      </div>
+      <div className="table-wrap">
+        <table className="runs-table compact-table">
+          <thead>
+            <tr>
+              <th>Sector</th>
+              <th>Test MAE</th>
+              <th>Test RMSE</th>
+              <th>Train</th>
+              <th>Val</th>
+              <th>Test</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={`${row.sector_bucket}-${row.run_id || "root"}`}>
+                <td>{row.sector_bucket}</td>
+                <td>{formatNumber(row.test_mae)}</td>
+                <td>{formatNumber(row.test_rmse)}</td>
+                <td>{row.num_train ?? "NA"}</td>
+                <td>{row.num_val ?? "NA"}</td>
+                <td>{row.num_test ?? "NA"}</td>
               </tr>
             ))}
           </tbody>
@@ -285,10 +347,14 @@ export function App() {
   const comparison = useMemo(() => {
     if (!selectedRun?.summary) return null;
     const run = selectedRun.summary;
-    const delta = run.baseline_test_mae - run.test_mae;
+    const delta =
+      run.baseline_test_mae !== null && run.baseline_test_mae !== undefined &&
+      run.test_mae !== null && run.test_mae !== undefined
+        ? run.baseline_test_mae - run.test_mae
+        : null;
     return {
       delta,
-      pct: run.baseline_test_mae ? (delta / run.baseline_test_mae) * 100 : null,
+      pct: delta !== null && run.baseline_test_mae ? (delta / run.baseline_test_mae) * 100 : null,
     };
   }, [selectedRun]);
 
@@ -299,7 +365,7 @@ export function App() {
           <div className="eyebrow">EPS Estimation</div>
           <h1>Run Viewer</h1>
         </div>
-        <div className="header-note">Interactive inspection for training metrics, curves, and prediction error structure.</div>
+        <div className="header-note">Interactive inspection for training metrics, sector breakdowns, curves, and prediction error structure.</div>
       </header>
 
       {loadingRuns ? <div className="loading">Loading runs…</div> : null}
@@ -316,12 +382,12 @@ export function App() {
           {selectedRun ? (
             <>
               <div className="summary-grid">
-                <SummaryCard label="Run" value={selectedRun.summary.name} hint={`${selectedRun.summary.model_type} / ${selectedRun.summary.optimizer}`} />
+                <SummaryCard label="Run" value={selectedRun.summary.name} hint={`${selectedRun.summary.model_type || "unknown"}${selectedRun.summary.optimizer ? ` / ${selectedRun.summary.optimizer}` : ""}`} />
                 <SummaryCard label="Test MAE" value={formatNumber(selectedRun.summary.test_mae)} />
                 <SummaryCard label="Test RMSE" value={formatNumber(selectedRun.summary.test_rmse)} />
                 <SummaryCard
-                  label="Vs Baseline"
-                  value={`${formatNumber(comparison?.delta)} MAE`}
+                  label={selectedRun.summary.baseline_name ? `Vs ${selectedRun.summary.baseline_name}` : "Vs Baseline"}
+                  value={comparison?.delta !== null ? `${formatNumber(comparison?.delta)} MAE` : "NA"}
                   hint={comparison?.pct !== null ? `${formatNumber(comparison?.pct, 1)}% better` : undefined}
                   className={metricDeltaClass(comparison?.delta)}
                 />
@@ -330,6 +396,7 @@ export function App() {
               </div>
 
               <TrainingHistoryChart history={selectedRun.history} />
+              <SectorTable rows={selectedRun.sector_summary} />
               <PredictionScatter rows={selectedRun.ticker_summary.slice(0, 80).map((row) => ({
                 actual: row.mean_actual,
                 prediction: row.mean_prediction,

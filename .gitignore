@@ -6,3 +6,4 @@ viewer_frontend/node_modules/
 .codex
 run_quantile_suite.sh
 run_lstm_suite.sh
+run_linear_suite.sh
