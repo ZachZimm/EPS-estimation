@@ -188,6 +188,22 @@ class GruSequenceEncoder(nn.Module):
         return hidden[-1]
 
 
+class LstmSequenceEncoder(nn.Module):
+    def __init__(self, seq_dim: int, d_model: int, num_layers: int, dropout: float) -> None:
+        super().__init__()
+        self.lstm = nn.LSTM(
+            input_size=seq_dim,
+            hidden_size=d_model,
+            num_layers=num_layers,
+            batch_first=True,
+            dropout=dropout if num_layers > 1 else 0.0,
+        )
+
+    def forward(self, sequence: torch.Tensor) -> torch.Tensor:
+        _, (hidden, _) = self.lstm(sequence)
+        return hidden[-1]
+
+
 class CnnSequenceEncoder(nn.Module):
     def __init__(self, seq_dim: int, d_model: int, dropout: float) -> None:
         super().__init__()
@@ -231,6 +247,9 @@ class SequenceRegressor(nn.Module):
             sequence_out_dim = d_model
         elif model_type == "gru":
             self.sequence_encoder = GruSequenceEncoder(seq_dim, d_model, num_layers, dropout)
+            sequence_out_dim = d_model
+        elif model_type == "lstm":
+            self.sequence_encoder = LstmSequenceEncoder(seq_dim, d_model, num_layers, dropout)
             sequence_out_dim = d_model
         elif model_type == "cnn":
             self.sequence_encoder = CnnSequenceEncoder(seq_dim, d_model, dropout)
