@@ -154,5 +154,7 @@
   ],
   "linear_include_ticker_fixed_effects": true,
   "linear_fit_intercept": true,
-  "linear_quantile_alpha": 0.0001
+  "linear_quantile_alpha": 0.0001,
+  "linear_feature_mode": "summary",
+  "linear_quantile_max_train_rows": 3000
 }

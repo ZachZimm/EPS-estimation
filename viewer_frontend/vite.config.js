@@ -6,7 +6,8 @@ export default defineConfig({
   server: {
     port: 4715,
     host: "0.0.0.0",
-    allowedHosts: ["lab"],
+    // Allow LAN and Tailscale access without having to enumerate hostnames.
+    allowedHosts: true,
     proxy: {
       "/api": {
         target: `http://127.0.0.1:${process.env.VITE_BACKEND_PORT || "8100"}`,

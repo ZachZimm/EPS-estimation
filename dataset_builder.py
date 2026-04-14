@@ -176,6 +176,8 @@ class PrototypeConfig:
     linear_include_ticker_fixed_effects: bool = True
     linear_fit_intercept: bool = True
     linear_quantile_alpha: float = 1e-4
+    linear_feature_mode: str = "summary"
+    linear_quantile_max_train_rows: int = 3000
     volatility_trim_enabled: bool = False
     volatility_trim_fraction: float = 0.0
     volatility_trim_min_history: int = 252

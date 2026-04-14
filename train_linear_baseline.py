@@ -15,9 +15,9 @@ from train_transformer import (
     DatasetBundle,
     TargetPreprocessor,
     _compute_prediction_metrics,
-    _point_prediction_from_output,
     _sanitize_slug,
     apply_tail_hardening,
+    evaluate_baselines,
     fit_feature_preprocessor,
     fit_target_preprocessor,
     inverse_transform_prediction,
@@ -27,10 +27,24 @@ from train_transformer import (
 )
 
 
+def _sequence_summary_features(sequences: np.ndarray, mode: str) -> np.ndarray:
+    if mode == "flat_full":
+        return sequences.reshape(sequences.shape[0], -1).astype(np.float32)
+    if mode != "summary":
+        raise ValueError(f"Unsupported linear_feature_mode: {mode}")
+    last = sequences[:, -1, :]
+    mean = sequences.mean(axis=1)
+    std = sequences.std(axis=1)
+    minimum = sequences.min(axis=1)
+    maximum = sequences.max(axis=1)
+    return np.concatenate([last, mean, std, minimum, maximum], axis=1).astype(np.float32)
+
+
 def _prepare_split_arrays(
     bundle: DatasetBundle,
     split: str,
     include_ticker_fixed_effects: bool,
+    feature_mode: str,
 ) -> tuple[pd.DataFrame, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     preprocessor = fit_feature_preprocessor(bundle)
     metadata = bundle.metadata[bundle.metadata["split"] == split].reset_index(drop=True).copy()
@@ -52,9 +66,9 @@ def _prepare_split_arrays(
     static = (clipped_static - preprocessor.static_mean[None, :]) / preprocessor.static_std[None, :]
     sequences = np.nan_to_num(sequences, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
     static = np.nan_to_num(static, nan=0.0, posinf=0.0, neginf=0.0).astype(np.float32)
-    sequence_flat = sequences.reshape(sequences.shape[0], -1)
+    sequence_features = _sequence_summary_features(sequences, feature_mode)
     ticker_ids = metadata["ticker_id"].to_numpy(dtype=np.int64)
-    parts = [sequence_flat, static]
+    parts = [sequence_features, static]
     if include_ticker_fixed_effects:
         num_tickers = int(bundle.metadata["ticker_id"].max()) + 1
         ticker_one_hot = np.eye(num_tickers, dtype=np.float32)[ticker_ids]
@@ -115,6 +129,16 @@ def _fit_point_model(x_train: np.ndarray, y_train: np.ndarray, config: Prototype
 
 
 def _fit_quantile_models(x_train: np.ndarray, y_train: np.ndarray, config: PrototypeConfig) -> dict[str, QuantileRegressor]:
+    max_rows = int(getattr(config, "linear_quantile_max_train_rows", 0) or 0)
+    if max_rows > 0 and len(x_train) > max_rows:
+        rng = np.random.default_rng(config.seed)
+        keep = rng.choice(len(x_train), size=max_rows, replace=False)
+        keep.sort()
+        x_fit = x_train[keep]
+        y_fit = y_train[keep]
+    else:
+        x_fit = x_train
+        y_fit = y_train
     models: dict[str, QuantileRegressor] = {}
     for quantile in config.quantiles:
         key = f"q{int(round(float(quantile) * 100)):02d}"
@@ -124,7 +148,7 @@ def _fit_quantile_models(x_train: np.ndarray, y_train: np.ndarray, config: Proto
             fit_intercept=config.linear_fit_intercept,
             solver="highs",
         )
-        model.fit(x_train, y_train)
+        model.fit(x_fit, y_fit)
         models[key] = model
     return models
 
@@ -134,6 +158,13 @@ def _evaluate_mae(actual: np.ndarray, pred: np.ndarray) -> float:
     if not np.any(mask):
         return float("nan")
     return float(np.mean(np.abs(actual[mask] - pred[mask])))
+
+
+def _evaluate_rmse(actual: np.ndarray, pred: np.ndarray) -> float:
+    mask = np.isfinite(actual) & np.isfinite(pred)
+    if not np.any(mask):
+        return float("nan")
+    return float(np.sqrt(np.mean(np.square(actual[mask] - pred[mask]))))
 
 
 def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, output_dir: Path) -> tuple[dict[str, Any], pd.DataFrame]:
@@ -146,13 +177,13 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
         config.residual_clip_upper_q,
     )
     train_meta, x_train, y_train_raw, baseline_train, ticker_train = _prepare_split_arrays(
-        bundle, "train", config.linear_include_ticker_fixed_effects
+        bundle, "train", config.linear_include_ticker_fixed_effects, config.linear_feature_mode
     )
-    val_meta, x_val, y_val_raw, baseline_val, ticker_val = _prepare_split_arrays(
-        bundle, "val", config.linear_include_ticker_fixed_effects
+    _, x_val, y_val_raw, baseline_val, ticker_val = _prepare_split_arrays(
+        bundle, "val", config.linear_include_ticker_fixed_effects, config.linear_feature_mode
     )
     test_meta, x_test, y_test_raw, baseline_test, ticker_test = _prepare_split_arrays(
-        bundle, "test", config.linear_include_ticker_fixed_effects
+        bundle, "test", config.linear_include_ticker_fixed_effects, config.linear_feature_mode
     )
     if len(x_train) == 0 or len(x_val) == 0 or len(x_test) == 0:
         raise RuntimeError("Train/val/test splits must all be non-empty.")
@@ -169,7 +200,7 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
         quantile_tensor = torch.tensor(test_quantiles, dtype=torch.float32)
         baseline_tensor = torch.tensor(baseline_test, dtype=torch.float32)
         ticker_tensor = torch.tensor(ticker_test, dtype=torch.long)
-        quantile_tensor = apply_tail_hardening(
+        test_quantiles = apply_tail_hardening(
             quantile_tensor,
             baseline_tensor,
             ticker_tensor,
@@ -177,8 +208,7 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
             config.cold_start_baseline_min_train_samples,
             config.residual_clip_mode,
         ).cpu().numpy()
-        quantile_tensor = np.sort(quantile_tensor, axis=1)
-        test_quantiles = quantile_tensor
+        test_quantiles = np.sort(test_quantiles, axis=1)
         quantiles = [float(q) for q in config.quantiles]
         median_idx = min(range(len(quantiles)), key=lambda i: abs(quantiles[i] - 0.5))
         val_pred = val_quantiles[:, median_idx]
@@ -189,14 +219,12 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
         test_pred_norm = model.predict(x_test).astype(np.float32)
         val_pred = _inverse_predictions_numpy(val_pred_norm, baseline_val, ticker_val, target_preprocessor)
         test_pred = _inverse_predictions_numpy(test_pred_norm, baseline_test, ticker_test, target_preprocessor)
+        test_quantiles = None
 
-    test_pred_tensor = torch.tensor(test_pred, dtype=torch.float32)
-    baseline_tensor = torch.tensor(baseline_test, dtype=torch.float32)
-    ticker_tensor = torch.tensor(ticker_test, dtype=torch.long)
     test_pred = apply_tail_hardening(
-        test_pred_tensor,
-        baseline_tensor,
-        ticker_tensor,
+        torch.tensor(test_pred, dtype=torch.float32),
+        torch.tensor(baseline_test, dtype=torch.float32),
+        torch.tensor(ticker_test, dtype=torch.long),
         target_preprocessor,
         config.cold_start_baseline_min_train_samples,
         config.residual_clip_mode,
@@ -208,7 +236,7 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
         blended = test_pred.copy()
         blended[valid_baseline] = alpha * test_pred[valid_baseline] + (1.0 - alpha) * baseline_test[valid_baseline]
         test_pred = blended
-        if config.prediction_objective == "quantile":
+        if test_quantiles is not None:
             adjusted = test_quantiles.copy()
             adjusted[valid_baseline, :] = alpha * adjusted[valid_baseline, :] + (1.0 - alpha) * baseline_test[valid_baseline, None]
             test_quantiles = adjusted
@@ -216,7 +244,7 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
     test_metadata = test_meta.copy()
     test_metadata["prediction"] = test_pred
     test_metadata["actual"] = y_test_raw
-    if config.prediction_objective == "quantile":
+    if test_quantiles is not None:
         ordered_keys = [f"q{int(round(float(q) * 100)):02d}" for q in config.quantiles]
         for idx, key in enumerate(ordered_keys):
             test_metadata[f"prediction_{key}"] = test_quantiles[:, idx]
@@ -242,13 +270,15 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
         "linear_include_ticker_fixed_effects": bool(config.linear_include_ticker_fixed_effects),
         "linear_fit_intercept": bool(config.linear_fit_intercept),
         "linear_quantile_alpha": float(config.linear_quantile_alpha),
+        "linear_feature_mode": config.linear_feature_mode,
+        "linear_quantile_max_train_rows": int(config.linear_quantile_max_train_rows),
         "val_mae": float(val_mae),
         "test_mae": float(test_metrics["mae"]),
         "test_rmse": float(test_metrics["rmse"]),
         "interval_80_coverage": test_metrics.get("interval_80_coverage"),
         "interval_80_width": test_metrics.get("interval_80_width"),
-        "val_baselines": {column: {k: (None if pd.isna(v) else float(v)) for k, v in vals.items()} for column, vals in {c: train_transformer.evaluate_baseline_column(bundle.metadata, 'val', c) for c in BASELINE_COLUMNS if c in bundle.metadata.columns}.items()},
-        "test_baselines": {column: {k: (None if pd.isna(v) else float(v)) for k, v in vals.items()} for column, vals in {c: train_transformer.evaluate_baseline_column(bundle.metadata, 'test', c) for c in BASELINE_COLUMNS if c in bundle.metadata.columns}.items()},
+        "val_baselines": evaluate_baselines(bundle.metadata, "val"),
+        "test_baselines": evaluate_baselines(bundle.metadata, "test"),
         "selected_val_baseline": selected_baseline_name,
         "selected_val_baseline_mae": selected_baseline["mae"],
         "num_train": int(len(x_train)),
@@ -261,11 +291,11 @@ def train_single_linear_model(bundle: DatasetBundle, config: PrototypeConfig, ou
             "epoch": 1,
             "lr": np.nan,
             "train_loss": np.nan,
-            "train_mae": _evaluate_mae(y_train_raw, _inverse_predictions_numpy(_fit_point_model(x_train, y_train, config).predict(x_train).astype(np.float32), baseline_train, ticker_train, target_preprocessor)) if config.prediction_objective == "point" else np.nan,
+            "train_mae": np.nan,
             "train_rmse": np.nan,
             "val_loss": np.nan,
             "val_mae": val_mae,
-            "val_rmse": float(np.sqrt(np.mean(np.square(pd.to_numeric(test_metadata['prediction'], errors='coerce').dropna().to_numpy(dtype=float)[:0])))) if False else np.nan,
+            "val_rmse": _evaluate_rmse(y_val_raw, val_pred),
         }
     ]).to_csv(output_dir / "training_history.csv", index=False)
     return metrics, test_metadata
@@ -327,17 +357,19 @@ def train_per_sector_linear(bundle: DatasetBundle, config: PrototypeConfig, outp
         "prediction_objective": config.prediction_objective,
         "quantiles": list(config.quantiles),
         "model_type": "true_linear_baseline",
-        "num_sector_models": int(len(sector_metrics_rows)),
         "test_mae": float(aggregate_metrics["mae"]),
         "test_rmse": float(aggregate_metrics["rmse"]),
         "interval_80_coverage": aggregate_metrics.get("interval_80_coverage"),
         "interval_80_width": aggregate_metrics.get("interval_80_width"),
         "test_count": int(aggregate_metrics["count"]),
+        "num_sector_models": int(len(sector_metrics_rows)),
         "test_baselines": aggregate_baselines,
         "val_baseline_selection_by_sector": val_baseline_summary,
         "linear_include_ticker_fixed_effects": bool(config.linear_include_ticker_fixed_effects),
         "linear_fit_intercept": bool(config.linear_fit_intercept),
         "linear_quantile_alpha": float(config.linear_quantile_alpha),
+        "linear_feature_mode": config.linear_feature_mode,
+        "linear_quantile_max_train_rows": int(config.linear_quantile_max_train_rows),
     }
     (output_dir / "metrics.json").write_text(json.dumps(metrics, indent=2))
     return metrics
@@ -365,6 +397,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    import train_transformer
-
     main()
