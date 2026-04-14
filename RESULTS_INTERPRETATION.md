@@ -70,7 +70,7 @@ This is the correct evaluation setup for deployment-style forecasting. A random 
 ### Baselines
 
 Several simple baselines were evaluated. In practice, the strongest baseline was usually:
-- trailing mean of prior EPS
+- trailing mean of prior EPS, defined here as the mean of the last four published quarterly EPS values
 
 Other baselines included:
 - persistence: last published quarterly EPS
@@ -147,6 +147,26 @@ Interpretation:
 - the additional infrastructure was useful
 - the added complexity was not yet justified by the performance gain
 - sector splitting did not solve the heavy-tail problem
+
+### Per-sector results
+
+The sector runs were not uniformly bad. They were uneven. Some sectors were modeled reasonably well, while others remained structurally difficult.
+
+Representative sector MAE results from the full phase-two sector run:
+- Consumer Defensive: `0.3543`
+- Utilities: `0.5717`
+- Financial Services: `0.7747`
+- Technology: `0.7805`
+- Communication Services: `0.8990`
+- Industrials: `1.0530`
+- Healthcare: `1.2179`
+- Consumer Cyclical: `2.1425`
+
+Interpretation:
+- stable sectors such as Consumer Defensive and Utilities were much easier
+- Technology and Financial Services were workable but not dominant wins
+- Consumer Cyclical remained the clearest weak sector and was heavily affected by tail names
+- after volatility trimming, sector performance improved substantially, but the trimmed global model still slightly outperformed the trimmed per-sector model overall
 
 ## 5. Volatility trimming was one of the clearest improvements
 
