@@ -1,0 +1,63 @@
+{
+  "num_samples": 687,
+  "split_counts": {
+    "train": 504,
+    "test": 103,
+    "val": 80
+  },
+  "sector_counts": {
+    "Industrials": 687
+  },
+  "delta_bucket_counts": {
+    "flat": 387,
+    "mild_rise": 105,
+    "mild_drop": 71,
+    "sharp_rise": 61,
+    "sharp_drop": 54
+  },
+  "pca_explained_variance_ratio": [
+    0.12867465615272522,
+    0.08799044042825699
+  ],
+  "feature_missingness": {
+    "last_prior_eps": 0.013100436681222707,
+    "baseline_trailing_mean": 0.013100436681222707,
+    "prev_eps_yoy_change": 0.05240174672489083,
+    "revenue_growth_yoy": 0.02911208151382824,
+    "operating_margin": 0.00727802037845706,
+    "vix_close": 0.07569141193595343
+  },
+  "target_surface_correlations": {
+    "last_prior_eps": {
+      "corr_actual_eps": 0.5489646762249245,
+      "corr_delta_last": -0.4641916410929113
+    },
+    "baseline_trailing_mean": {
+      "corr_actual_eps": 0.699442318428331,
+      "corr_delta_last": -0.1172627684694198
+    },
+    "prev_eps_yoy_change": {
+      "corr_actual_eps": -0.06681019545994328,
+      "corr_delta_last": -0.5246985972894457
+    },
+    "revenue_growth_yoy": {
+      "corr_actual_eps": -0.0003325240154485824,
+      "corr_delta_last": -0.04070655410943471
+    },
+    "operating_margin": {
+      "corr_actual_eps": 0.07282758015123014,
+      "corr_delta_last": 0.01307283888687621
+    },
+    "vix_close": {
+      "corr_actual_eps": 0.011533743422092319,
+      "corr_delta_last": -0.001327420590828606
+    }
+  },
+  "test_error_by_bucket": {
+    "flat": 0.3445289897435897,
+    "mild_drop": 0.8536319250000001,
+    "mild_rise": 0.6450326823529413,
+    "sharp_drop": 1.6223411266666665,
+    "sharp_rise": 2.19735168125
+  }
+}

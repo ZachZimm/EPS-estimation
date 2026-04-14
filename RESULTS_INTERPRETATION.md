@@ -7,8 +7,12 @@
 - Data and Evaluation Setup
 - Modeling Approaches Tried
 - High-Level Results
+- Best Runs Summary
+- Apples-to-Apples Caveats
 - What Worked Best
+- Why the Neural Nets Underperformed
 - Main Conclusions
+- Current Recommendation
 - How to Interpret the Learnable-Space Analysis
 - Practical Takeaway
 
@@ -261,6 +265,51 @@ Interpretation:
 - linear quantile regression is a credible baseline family
 - plain linear point regression is not
 
+## Best Runs Summary
+
+A compact view of the most important outcomes:
+
+- Best learned point model:
+  - trimmed expanded global LSTM point
+  - test MAE `0.8352`
+  - test RMSE `1.4085`
+- Best learned quantile model by MAE:
+  - trimmed expanded global true linear quantile
+  - test MAE `0.8180`
+  - test RMSE `1.4809`
+  - interval 80% coverage `0.5757`
+- Best expanded global transformer:
+  - untrimmed expanded macro transformer
+  - test MAE `0.9517`
+  - test RMSE `2.8733`
+- Best per-sector aggregate run:
+  - trimmed per-sector LSTM point
+  - test MAE `0.8500`
+  - test RMSE `1.4668`
+- Strongest simple baseline on the trimmed universe:
+  - trailing mean of last 4 published quarterly EPS values
+  - test MAE `0.7797`
+
+Interpretation:
+- the best learned point model came from the trimmed global LSTM family
+- the best simple baseline still beat the best learned point model
+- the best uncertainty-oriented baseline came from true linear quantile regression, not the neural quantile models
+
+## Apples-to-Apples Caveats
+
+Several comparisons in this repo are directionally useful but not strictly identical evaluations.
+
+Important caveats:
+- trimmed vs untrimmed runs are evaluated on different test universes
+- reduced-universe runs are easier by construction because hard names were excluded
+- global vs per-sector runs differ not only by architecture but also by how data is partitioned across models
+- quantile and point objectives are not identical targets from an optimization perspective, even when MAE is used for comparison
+
+How to interpret results correctly:
+- compare models most seriously within the same universe definition
+- treat trimmed-universe gains as evidence that tail names are a major problem, not as proof of universal improvement
+- treat reduced-universe results as evidence about learnable subsets, not about broad-market coverage
+
 ## What Worked Best
 
 If “best” means best learned point model:
@@ -273,6 +322,58 @@ If “best” means best simple baseline on the trimmed global universe:
 - test MAE `0.7797`
 
 This distinction matters. The strongest learned model in the repo still does not beat the strongest simple baseline consistently.
+
+## Why the Neural Nets Underperformed
+
+The neural approaches did not completely fail, but they generally failed to establish clear superiority over the strongest simple baseline.
+
+The evidence suggests several reasons.
+
+### 1. The target is dominated by strong autoregressive structure
+
+The trailing-mean baseline, defined as the mean of the last four published quarterly EPS values, remained extremely difficult to beat. This indicates that a large share of the predictable structure in announced EPS is already captured by recent EPS history alone.
+
+That creates a hard bar for any richer model:
+- the model must add value beyond a strong low-variance historical summary
+- it is not enough merely to beat persistence
+
+### 2. The error distribution is heavy-tailed
+
+The learnable-space analysis shows that `flat` and mild-move buckets are relatively easy, while `sharp_rise` and `sharp_drop` buckets are much harder. This means the networks are being evaluated on a target where a small number of extreme cases can dominate overall quality.
+
+This hurts neural models in two ways:
+- regression losses are pulled around by rare but large misses
+- uncertainty is difficult to learn because the tails are sparse and heterogeneous
+
+### 3. The feature set still appears weak for the hardest cases
+
+Price history, macro context, and public fundamentals were enough to learn some structure, but not enough to reliably anticipate the largest EPS moves. In other words:
+- the networks were not simply under-optimized
+- the available features may not contain enough pre-announcement information to resolve the hardest events
+
+This is consistent with the overlap seen in the embedding plots: some difficult regions are not cleanly separable with the current features.
+
+### 4. Cross-ticker modeling is helpful but imperfect
+
+Global neural models benefited from larger universes, which suggests shared structure exists. But the worst failures remained concentrated in a subset of names with extreme scale shifts or volatility. That means the shared model learned broad regularities without fully capturing company-specific tail behavior.
+
+### 5. Extra complexity did not buy enough signal
+
+Several more complex directions helped less than expected:
+- sector-specific training
+- pre-release fundamentals with separate sector models
+- neural quantile heads
+
+These were not useless, but they did not generate enough incremental predictive power to justify their complexity relative to the trailing-mean baseline.
+
+### 6. Neural quantile outputs were overconfident
+
+The neural quantile models produced intervals with empirical coverage far below the nominal target. That suggests the networks learned point-like central tendencies more easily than calibrated uncertainty. The issue is not only forecast accuracy; it is also uncertainty miscalibration.
+
+Overall interpretation:
+- the neural models found real signal
+- they improved over weaker baselines such as persistence in many cases
+- but they did not solve the hard part of the problem, which is adding robust value beyond a strong historical EPS baseline in a heavy-tailed target space
 
 ## Main Conclusions
 
@@ -299,6 +400,24 @@ The right benchmark is usually the trailing-mean baseline, not last-quarter pers
 ### 6. Raw uncertainty estimates remain a weak point
 
 Neural quantile models were badly under-covered. True linear quantile regression did better, but still not enough to be considered calibrated.
+
+## Current Recommendation
+
+Based on the experiments so far:
+
+- If you want the best learned point forecast currently available in the repo:
+  - use the trimmed expanded global LSTM point model
+- If you want the strongest simple benchmark to compare against:
+  - use the trailing mean of the last four published quarterly EPS values
+- If you want a simple uncertainty-oriented baseline:
+  - use the trimmed expanded global true linear quantile model
+- If you want intervals you can actually trust for coverage:
+  - do not rely on the raw neural quantile outputs without additional calibration
+
+Operationally, the most defensible setup today is:
+- compare every new learned model against trailing mean, not just persistence
+- treat the trimmed global LSTM point model as the best learned reference model
+- treat conformal calibration or another calibration layer as the next serious step for uncertainty estimation
 
 ## How to Interpret the Learnable-Space Analysis
 

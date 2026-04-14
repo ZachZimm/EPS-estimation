@@ -1,0 +1,50 @@
+{
+  "Consumer Cyclical": {
+    "num_tickers": 1,
+    "tickers": [
+      "AMZN"
+    ],
+    "split_counts": {
+      "train": 69,
+      "val": 16,
+      "test": 12
+    }
+  },
+  "Energy": {
+    "num_tickers": 2,
+    "tickers": [
+      "CVX",
+      "XOM"
+    ],
+    "split_counts": {
+      "train": 191,
+      "val": 33,
+      "test": 26
+    }
+  },
+  "Financial Services": {
+    "num_tickers": 2,
+    "tickers": [
+      "BAC",
+      "JPM"
+    ],
+    "split_counts": {
+      "train": 192,
+      "val": 32,
+      "test": 26
+    }
+  },
+  "Technology": {
+    "num_tickers": 3,
+    "tickers": [
+      "AAPL",
+      "MSFT",
+      "NVDA"
+    ],
+    "split_counts": {
+      "train": 270,
+      "val": 46,
+      "test": 40
+    }
+  }
+}

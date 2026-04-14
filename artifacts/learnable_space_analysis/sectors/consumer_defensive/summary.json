@@ -1,0 +1,63 @@
+{
+  "num_samples": 683,
+  "split_counts": {
+    "train": 523,
+    "val": 80,
+    "test": 80
+  },
+  "sector_counts": {
+    "Consumer Defensive": 683
+  },
+  "delta_bucket_counts": {
+    "flat": 491,
+    "mild_rise": 82,
+    "mild_drop": 68,
+    "sharp_rise": 18,
+    "sharp_drop": 18
+  },
+  "pca_explained_variance_ratio": [
+    0.1746673882007599,
+    0.07476412504911423
+  ],
+  "feature_missingness": {
+    "last_prior_eps": 0.008784773060029283,
+    "baseline_trailing_mean": 0.008784773060029283,
+    "prev_eps_yoy_change": 0.03513909224011713,
+    "revenue_growth_yoy": 0.02342606149341142,
+    "operating_margin": 0.005856515373352855,
+    "vix_close": 0.08199121522693997
+  },
+  "target_surface_correlations": {
+    "last_prior_eps": {
+      "corr_actual_eps": 0.8045905887740217,
+      "corr_delta_last": -0.29766019884704675
+    },
+    "baseline_trailing_mean": {
+      "corr_actual_eps": 0.8641980268795058,
+      "corr_delta_last": -0.06774201366204657
+    },
+    "prev_eps_yoy_change": {
+      "corr_actual_eps": 0.07681377793707199,
+      "corr_delta_last": -0.556833690989926
+    },
+    "revenue_growth_yoy": {
+      "corr_actual_eps": -0.09632112579866155,
+      "corr_delta_last": -0.011097618668428604
+    },
+    "operating_margin": {
+      "corr_actual_eps": 0.031689801859059265,
+      "corr_delta_last": -0.004529711337235501
+    },
+    "vix_close": {
+      "corr_actual_eps": 0.02095425068447573,
+      "corr_delta_last": 0.02250009658645091
+    }
+  },
+  "test_error_by_bucket": {
+    "flat": 0.12675695258064512,
+    "mild_drop": 0.4773763466666667,
+    "mild_rise": 0.2626439795238095,
+    "sharp_drop": 0.9583439666666668,
+    "sharp_rise": 0.979566088
+  }
+}

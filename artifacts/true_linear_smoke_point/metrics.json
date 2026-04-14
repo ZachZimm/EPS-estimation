@@ -1,0 +1,80 @@
+{
+  "best_epoch": 1,
+  "stopped_early": false,
+  "epochs_completed": 1,
+  "model_type": "true_linear_regression",
+  "optimizer": null,
+  "prediction_objective": "point",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "linear_include_ticker_fixed_effects": true,
+  "linear_fit_intercept": true,
+  "linear_quantile_alpha": 0.0001,
+  "val_mae": 1.2215816974639893,
+  "test_mae": 0.8754919767379761,
+  "test_rmse": 1.093314290046692,
+  "interval_80_coverage": null,
+  "interval_80_width": null,
+  "val_baselines": {
+    "baseline_persistence": {
+      "mae": 0.7222952755905512,
+      "rmse": 1.5362472343215563,
+      "count": 127.0
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.9073346456692913,
+      "rmse": 1.6370262342834592,
+      "count": 127.0
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.6833238188976376,
+      "rmse": 1.2587097754619625,
+      "count": 127.0
+    },
+    "baseline_trend": {
+      "mae": 0.9161122047244095,
+      "rmse": 1.951662403013043,
+      "count": 127.0
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.4401689222186536,
+      "rmse": 1.972182393505755,
+      "count": 111.0
+    }
+  },
+  "test_baselines": {
+    "baseline_persistence": {
+      "mae": 0.48213461538461533,
+      "rmse": 0.7725998317369737,
+      "count": 104.0
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.7132740384615384,
+      "rmse": 1.0232243355517814,
+      "count": 104.0
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.5086045673076922,
+      "rmse": 0.7245342489175838,
+      "count": 104.0
+    },
+    "baseline_trend": {
+      "mae": 0.6936274038461538,
+      "rmse": 1.2498709589643644,
+      "count": 104.0
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.828456526292407,
+      "rmse": 2.317557757763663,
+      "count": 92.0
+    }
+  },
+  "selected_val_baseline": "baseline_trailing_mean",
+  "selected_val_baseline_mae": 0.6833238188976376,
+  "num_train": 722,
+  "num_val": 127,
+  "num_test": 104
+}

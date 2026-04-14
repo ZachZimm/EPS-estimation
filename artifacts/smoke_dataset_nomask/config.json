@@ -1,0 +1,10 @@
+{
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "NVDA"
+  ],
+  "seq_len": 252,
+  "train_end": "2018-12-31",
+  "val_end": "2022-12-31"
+}

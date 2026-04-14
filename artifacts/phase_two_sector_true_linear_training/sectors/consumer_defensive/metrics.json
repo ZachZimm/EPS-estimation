@@ -1,0 +1,82 @@
+{
+  "best_epoch": 1,
+  "stopped_early": false,
+  "epochs_completed": 1,
+  "model_type": "true_linear_regression",
+  "optimizer": null,
+  "prediction_objective": "point",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "linear_include_ticker_fixed_effects": true,
+  "linear_fit_intercept": true,
+  "linear_quantile_alpha": 0.0001,
+  "linear_feature_mode": "summary",
+  "linear_quantile_max_train_rows": 3000,
+  "val_mae": 7.766955375671387,
+  "test_mae": 5.303621292114258,
+  "test_rmse": 6.283650875091553,
+  "interval_80_coverage": null,
+  "interval_80_width": null,
+  "val_baselines": {
+    "baseline_persistence": {
+      "mae": 0.61685295,
+      "rmse": 1.0277939784009003,
+      "count": 80
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.6097705250000001,
+      "rmse": 1.077185358616566,
+      "count": 80
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.5129638406250001,
+      "rmse": 0.8517511784392011,
+      "count": 80
+    },
+    "baseline_trend": {
+      "mae": 0.8485180937500001,
+      "rmse": 1.3401148266809395,
+      "count": 80
+    },
+    "baseline_sector_peer_median": {
+      "mae": 0.8741884527732848,
+      "rmse": 1.2166602724461613,
+      "count": 80
+    }
+  },
+  "test_baselines": {
+    "baseline_persistence": {
+      "mae": 0.44801862499999995,
+      "rmse": 0.6597371902177643,
+      "count": 72
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.4089484705882352,
+      "rmse": 0.6330775582633663,
+      "count": 68
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.3722063738425926,
+      "rmse": 0.5534620568222282,
+      "count": 72
+    },
+    "baseline_trend": {
+      "mae": 0.6522588529411765,
+      "rmse": 0.9425121932348776,
+      "count": 68
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.0535791212852195,
+      "rmse": 1.4219178053447474,
+      "count": 74
+    }
+  },
+  "selected_val_baseline": "baseline_trailing_mean",
+  "selected_val_baseline_mae": 0.5129638406250001,
+  "num_train": 523,
+  "num_val": 80,
+  "num_test": 74
+}

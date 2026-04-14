@@ -1,0 +1,71 @@
+{
+  "num_samples": 7053,
+  "split_counts": {
+    "train": 5024,
+    "test": 1112,
+    "val": 917
+  },
+  "sector_counts": {
+    "Technology": 1554,
+    "Healthcare": 1085,
+    "Financial Services": 986,
+    "Consumer Cyclical": 825,
+    "Industrials": 687,
+    "Consumer Defensive": 683,
+    "Communication Services": 557,
+    "Utilities": 362,
+    "OTHER": 314
+  },
+  "delta_bucket_counts": {
+    "flat": 4403,
+    "mild_rise": 987,
+    "mild_drop": 789,
+    "sharp_rise": 417,
+    "sharp_drop": 387
+  },
+  "pca_explained_variance_ratio": [
+    0.12013595551252365,
+    0.06261582672595978
+  ],
+  "feature_missingness": {
+    "last_prior_eps": 0.009924854671770877,
+    "baseline_trailing_mean": 0.009924854671770877,
+    "prev_eps_yoy_change": 0.04055012051609244,
+    "revenue_growth_yoy": 0.020133276619878068,
+    "operating_margin": 0.12406068339713597,
+    "vix_close": 0.05728058981993478
+  },
+  "target_surface_correlations": {
+    "last_prior_eps": {
+      "corr_actual_eps": 0.7439362231759032,
+      "corr_delta_last": -0.20215737282476212
+    },
+    "baseline_trailing_mean": {
+      "corr_actual_eps": 0.7999833955184948,
+      "corr_delta_last": 0.037623316388322295
+    },
+    "prev_eps_yoy_change": {
+      "corr_actual_eps": 0.12232577641840528,
+      "corr_delta_last": -0.5533645373779078
+    },
+    "revenue_growth_yoy": {
+      "corr_actual_eps": -0.03110499886294637,
+      "corr_delta_last": -0.003972674521626148
+    },
+    "operating_margin": {
+      "corr_actual_eps": 0.058231348535016485,
+      "corr_delta_last": -0.008460266612334923
+    },
+    "vix_close": {
+      "corr_actual_eps": -0.017831168075277647,
+      "corr_delta_last": -0.00576952369537807
+    }
+  },
+  "test_error_by_bucket": {
+    "flat": 0.274203088360804,
+    "mild_drop": 0.478748005478022,
+    "mild_rise": 0.5175103234004237,
+    "sharp_drop": 2.3138612279032262,
+    "sharp_rise": 2.9818947513088236
+  }
+}

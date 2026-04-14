@@ -1,0 +1,20 @@
+{
+  "best_epoch": 5,
+  "stopped_early": true,
+  "epochs_completed": 17,
+  "model_type": "cnn",
+  "optimizer": "adamw",
+  "val_mae": 0.6965202261538556,
+  "test_mae": 1.3856621980667114,
+  "test_rmse": 5.425978183746338,
+  "val_baseline": {
+    "mae": 0.8185329878472223,
+    "rmse": 1.6744030046555,
+    "count": 576
+  },
+  "test_baseline": {
+    "mae": 1.15760892,
+    "rmse": 3.8610169958947482,
+    "count": 550
+  }
+}

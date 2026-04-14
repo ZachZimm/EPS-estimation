@@ -1,0 +1,18 @@
+{
+  "best_epoch": 1,
+  "stopped_early": false,
+  "epochs_completed": 2,
+  "val_mae": 0.33153361276439997,
+  "test_mae": 0.8989204168319702,
+  "test_rmse": 1.0858403444290161,
+  "val_baseline": {
+    "mae": 0.2576086956521739,
+    "rmse": 0.35583948506375,
+    "count": 46
+  },
+  "test_baseline": {
+    "mae": 0.49605,
+    "rmse": 0.7629530129699993,
+    "count": 40
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "tickers": [
+    "AAPL",
+    "MSFT",
+    "NVDA",
+    "AMZN",
+    "JPM",
+    "BAC",
+    "XOM",
+    "CVX"
+  ],
+  "seq_len": 252,
+  "train_end": "2018-12-31",
+  "val_end": "2022-12-31",
+  "sector_modeling_mode": "per_sector",
+  "sector_min_train_samples": 20,
+  "sector_fallback_bucket": "OTHER"
+}

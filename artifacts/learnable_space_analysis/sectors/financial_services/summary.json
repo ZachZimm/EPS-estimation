@@ -1,0 +1,63 @@
+{
+  "num_samples": 986,
+  "split_counts": {
+    "train": 678,
+    "test": 164,
+    "val": 144
+  },
+  "sector_counts": {
+    "Financial Services": 986
+  },
+  "delta_bucket_counts": {
+    "flat": 500,
+    "mild_rise": 173,
+    "mild_drop": 134,
+    "sharp_rise": 90,
+    "sharp_drop": 81
+  },
+  "pca_explained_variance_ratio": [
+    0.11342079192399979,
+    0.08550956845283508
+  ],
+  "feature_missingness": {
+    "last_prior_eps": 0.008113590263691683,
+    "baseline_trailing_mean": 0.008113590263691683,
+    "prev_eps_yoy_change": 0.032454361054766734,
+    "revenue_growth_yoy": 0.028397565922920892,
+    "operating_margin": 0.8509127789046653,
+    "vix_close": 0.012170385395537525
+  },
+  "target_surface_correlations": {
+    "last_prior_eps": {
+      "corr_actual_eps": 0.8234312309811945,
+      "corr_delta_last": -0.27899960281776476
+    },
+    "baseline_trailing_mean": {
+      "corr_actual_eps": 0.8063457291945867,
+      "corr_delta_last": -0.14245084912181477
+    },
+    "prev_eps_yoy_change": {
+      "corr_actual_eps": 0.26306572005597495,
+      "corr_delta_last": -0.2673262112446281
+    },
+    "revenue_growth_yoy": {
+      "corr_actual_eps": 0.050064663325258656,
+      "corr_delta_last": -0.022155034860904182
+    },
+    "operating_margin": {
+      "corr_actual_eps": -0.13412380643335173,
+      "corr_delta_last": 0.01643188239008111
+    },
+    "vix_close": {
+      "corr_actual_eps": -0.06181480726726131,
+      "corr_delta_last": -0.0666605714950883
+    }
+  },
+  "test_error_by_bucket": {
+    "flat": 0.341518714,
+    "mild_drop": 0.69577892,
+    "mild_rise": 0.48218566324324325,
+    "sharp_drop": 1.64846766875,
+    "sharp_rise": 1.9840775481818183
+  }
+}

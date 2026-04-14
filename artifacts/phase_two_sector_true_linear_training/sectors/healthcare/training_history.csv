@@ -1,0 +1,2 @@
+epoch,lr,train_loss,train_mae,train_rmse,val_loss,val_mae,val_rmse
+1,,,,,,1.462345838546753,1.863413691520691

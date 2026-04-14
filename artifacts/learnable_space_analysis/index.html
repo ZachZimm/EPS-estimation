@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Learnable Space Analysis</title>
+  <style>
+    :root {
+      --bg: #f6f3ed;
+      --surface: #fffdf9;
+      --surface-alt: #f1ece3;
+      --text: #201d18;
+      --muted: #5b564d;
+      --line: #d6cec1;
+      --accent: #5a4630;
+      --accent-soft: #ece4d8;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+      line-height: 1.45;
+    }
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+      text-underline-offset: 0.14em;
+    }
+    a:hover {
+      color: #3d2f1f;
+    }
+    img {
+      display: block;
+      max-width: 100%;
+    }
+    .page {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .page-header {
+      display: grid;
+      gap: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .page-header h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.1;
+    }
+    .page-header p {
+      margin: 8px 0 0;
+      max-width: 760px;
+      color: var(--muted);
+    }
+    .top-links,
+    .section-files {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 18px;
+    }
+    .toc {
+      display: grid;
+      gap: 10px;
+      padding: 14px 16px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    .toc h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .toc ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 8px 16px;
+    }
+    .section {
+      margin-top: 28px;
+    }
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 22px;
+    }
+    .section-header {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-header h2 {
+      margin-bottom: 4px;
+    }
+    .section-header p {
+      margin: 0;
+      color: var(--muted);
+    }
+    .overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px 16px;
+    }
+    .panel--compact {
+      min-height: 0;
+    }
+    .panel h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+    .link-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .stats-table th,
+    .stats-table td {
+      padding: 7px 0;
+      border-top: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    .stats-table tbody tr:first-child th,
+    .stats-table tbody tr:first-child td {
+      border-top: 0;
+      padding-top: 0;
+    }
+    .stats-table th {
+      width: 56%;
+      font-weight: 500;
+      color: var(--muted);
+    }
+    .figure-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .figure-card {
+      margin: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .figure-image {
+      display: block;
+      background: var(--surface-alt);
+      border-bottom: 1px solid var(--line);
+    }
+    .figure-card img {
+      width: 100%;
+      height: auto;
+    }
+    .figure-card figcaption {
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+    .figure-card figcaption a {
+      text-decoration: none;
+    }
+    .figure-card figcaption a:hover {
+      text-decoration: underline;
+    }
+    @media (max-width: 720px) {
+      .page {
+        padding: 16px;
+      }
+      .page-header h1 {
+        font-size: 28px;
+      }
+      .toc ul {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="page-header">
+      <div>
+        <h1>Learnable Space Analysis</h1>
+        <p>Embedding plots, bucketed views, and target-surface diagnostics for the full EPS dataset and each sector slice.</p>
+      </div>
+      <div class="top-links">
+        <a href="summary.json">summary.json</a>
+        <a href="analysis_frame.csv">analysis_frame.csv</a>
+        <a href="embedding_coordinates.csv">embedding_coordinates.csv</a>
+      </div>
+      <nav class="toc" aria-label="Sector navigation">
+        <h2>Sectors</h2>
+        <ul>
+          <li><a href="#communication_services">Communication Services</a></li>
+<li><a href="#consumer_cyclical">Consumer Cyclical</a></li>
+<li><a href="#consumer_defensive">Consumer Defensive</a></li>
+<li><a href="#financial_services">Financial Services</a></li>
+<li><a href="#healthcare">Healthcare</a></li>
+<li><a href="#industrials">Industrials</a></li>
+<li><a href="#other">Other</a></li>
+<li><a href="#technology">Technology</a></li>
+<li><a href="#utilities">Utilities</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section class="section">
+      <h2>Overview</h2>
+      <div class="overview-grid">
+        <section class="panel panel--compact">
+  <h3>Files</h3>
+  <ul class="link-list">
+    <li><a href="summary.json">summary.json</a></li>
+    <li><a href="analysis_frame.csv">analysis_frame.csv</a></li>
+    <li><a href="embedding_coordinates.csv">embedding_coordinates.csv</a></li>
+  </ul>
+</section>
+<section class="panel">
+  <h3>Dataset</h3>
+  <table class="stats-table"><tbody>
+<tr><th scope="row">Samples</th><td>7,053</td></tr>
+<tr><th scope="row">Sector groups</th><td>9</td></tr>
+<tr><th scope="row">PC1 variance</th><td>12.0%</td></tr>
+<tr><th scope="row">PC2 variance</th><td>6.3%</td></tr>
+<tr><th scope="row">Operating Margin</th><td>12.4%</td></tr>
+  </tbody></table>
+</section>
+<section class="panel panel--compact">
+  <h3>Splits</h3>
+  <table class="stats-table"><tbody>
+<tr><th scope="row">Train</th><td>5,024</td></tr>
+<tr><th scope="row">Test</th><td>1,112</td></tr>
+<tr><th scope="row">Val</th><td>917</td></tr>
+  </tbody></table>
+</section>
+<section class="panel panel--compact">
+  <h3>Delta buckets</h3>
+  <table class="stats-table"><tbody>
+<tr><th scope="row">Flat</th><td>4,403</td></tr>
+<tr><th scope="row">Mild Rise</th><td>987</td></tr>
+<tr><th scope="row">Mild Drop</th><td>789</td></tr>
+<tr><th scope="row">Sharp Rise</th><td>417</td></tr>
+<tr><th scope="row">Sharp Drop</th><td>387</td></tr>
+  </tbody></table>
+</section>
+<section class="panel panel--compact">
+  <h3>Mean test error</h3>
+  <table class="stats-table"><tbody>
+<tr><th scope="row">Flat</th><td>0.274</td></tr>
+<tr><th scope="row">Mild Drop</th><td>0.479</td></tr>
+<tr><th scope="row">Mild Rise</th><td>0.518</td></tr>
+<tr><th scope="row">Sharp Drop</th><td>2.314</td></tr>
+<tr><th scope="row">Sharp Rise</th><td>2.982</td></tr>
+  </tbody></table>
+</section>
+<section class="panel">
+  <h3>Correlation to actual EPS</h3>
+  <table class="stats-table"><tbody>
+<tr><th scope="row">Last Prior EPS</th><td>0.744</td></tr>
+<tr><th scope="row">Trailing Mean EPS (4Q)</th><td>0.800</td></tr>
+<tr><th scope="row">Prior EPS YoY Change</th><td>0.122</td></tr>
+<tr><th scope="row">Revenue Growth YoY</th><td>-0.031</td></tr>
+<tr><th scope="row">Operating Margin</th><td>0.058</td></tr>
+<tr><th scope="row">VIX Close</th><td>-0.018</td></tr>
+  </tbody></table>
+</section>
+      </div>
+    </section>
+
+    <section class="section" id="global">
+      <h2>Global figures</h2>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="pca_separability.png"><img src="pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="umap_separability.png"><img src="umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="pca_faceted_by_delta_bucket.png"><img src="pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="umap_faceted_by_delta_bucket.png"><img src="umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="pca_separability_company_specific_only.png"><img src="pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="umap_separability_company_specific_only.png"><img src="umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="pca_faceted_by_delta_bucket_company_specific_only.png"><img src="pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="umap_faceted_by_delta_bucket_company_specific_only.png"><img src="umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="target_surfaces_actual_eps.png"><img src="target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="target_surfaces_delta_last.png"><img src="target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Sector figures</h2>
+      <section class="section sector-section" id="communication_services">
+      <div class="section-header">
+        <div>
+          <h2>Communication Services</h2>
+          <p>557 samples | Train 390 | Test 87 | Val 80</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/communication_services/summary.json">summary.json</a>
+          <a href="sectors/communication_services/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/communication_services/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/communication_services/pca_separability.png"><img src="sectors/communication_services/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/communication_services/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/umap_separability.png"><img src="sectors/communication_services/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/communication_services/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/pca_faceted_by_delta_bucket.png"><img src="sectors/communication_services/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/communication_services/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/umap_faceted_by_delta_bucket.png"><img src="sectors/communication_services/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/communication_services/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/pca_separability_company_specific_only.png"><img src="sectors/communication_services/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/communication_services/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/umap_separability_company_specific_only.png"><img src="sectors/communication_services/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/communication_services/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/communication_services/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/communication_services/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/communication_services/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/communication_services/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/target_surfaces_actual_eps.png"><img src="sectors/communication_services/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/communication_services/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/communication_services/target_surfaces_delta_last.png"><img src="sectors/communication_services/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/communication_services/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="consumer_cyclical">
+      <div class="section-header">
+        <div>
+          <h2>Consumer Cyclical</h2>
+          <p>825 samples | Train 593 | Test 119 | Val 113</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/consumer_cyclical/summary.json">summary.json</a>
+          <a href="sectors/consumer_cyclical/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/consumer_cyclical/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/pca_separability.png"><img src="sectors/consumer_cyclical/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/umap_separability.png"><img src="sectors/consumer_cyclical/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/pca_faceted_by_delta_bucket.png"><img src="sectors/consumer_cyclical/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/umap_faceted_by_delta_bucket.png"><img src="sectors/consumer_cyclical/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/pca_separability_company_specific_only.png"><img src="sectors/consumer_cyclical/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/umap_separability_company_specific_only.png"><img src="sectors/consumer_cyclical/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/consumer_cyclical/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/consumer_cyclical/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/target_surfaces_actual_eps.png"><img src="sectors/consumer_cyclical/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_cyclical/target_surfaces_delta_last.png"><img src="sectors/consumer_cyclical/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/consumer_cyclical/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="consumer_defensive">
+      <div class="section-header">
+        <div>
+          <h2>Consumer Defensive</h2>
+          <p>683 samples | Train 523 | Val 80 | Test 80</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/consumer_defensive/summary.json">summary.json</a>
+          <a href="sectors/consumer_defensive/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/consumer_defensive/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/pca_separability.png"><img src="sectors/consumer_defensive/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/umap_separability.png"><img src="sectors/consumer_defensive/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/pca_faceted_by_delta_bucket.png"><img src="sectors/consumer_defensive/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/umap_faceted_by_delta_bucket.png"><img src="sectors/consumer_defensive/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/pca_separability_company_specific_only.png"><img src="sectors/consumer_defensive/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/umap_separability_company_specific_only.png"><img src="sectors/consumer_defensive/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/consumer_defensive/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/consumer_defensive/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/target_surfaces_actual_eps.png"><img src="sectors/consumer_defensive/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/consumer_defensive/target_surfaces_delta_last.png"><img src="sectors/consumer_defensive/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/consumer_defensive/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="financial_services">
+      <div class="section-header">
+        <div>
+          <h2>Financial Services</h2>
+          <p>986 samples | Train 678 | Test 164 | Val 144</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/financial_services/summary.json">summary.json</a>
+          <a href="sectors/financial_services/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/financial_services/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/financial_services/pca_separability.png"><img src="sectors/financial_services/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/financial_services/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/umap_separability.png"><img src="sectors/financial_services/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/financial_services/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/pca_faceted_by_delta_bucket.png"><img src="sectors/financial_services/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/financial_services/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/umap_faceted_by_delta_bucket.png"><img src="sectors/financial_services/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/financial_services/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/pca_separability_company_specific_only.png"><img src="sectors/financial_services/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/financial_services/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/umap_separability_company_specific_only.png"><img src="sectors/financial_services/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/financial_services/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/financial_services/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/financial_services/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/financial_services/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/financial_services/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/target_surfaces_actual_eps.png"><img src="sectors/financial_services/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/financial_services/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/financial_services/target_surfaces_delta_last.png"><img src="sectors/financial_services/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/financial_services/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="healthcare">
+      <div class="section-header">
+        <div>
+          <h2>Healthcare</h2>
+          <p>1,085 samples | Train 775 | Test 174 | Val 136</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/healthcare/summary.json">summary.json</a>
+          <a href="sectors/healthcare/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/healthcare/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/healthcare/pca_separability.png"><img src="sectors/healthcare/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/healthcare/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/umap_separability.png"><img src="sectors/healthcare/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/healthcare/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/pca_faceted_by_delta_bucket.png"><img src="sectors/healthcare/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/healthcare/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/umap_faceted_by_delta_bucket.png"><img src="sectors/healthcare/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/healthcare/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/pca_separability_company_specific_only.png"><img src="sectors/healthcare/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/healthcare/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/umap_separability_company_specific_only.png"><img src="sectors/healthcare/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/healthcare/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/healthcare/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/healthcare/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/healthcare/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/healthcare/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/target_surfaces_actual_eps.png"><img src="sectors/healthcare/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/healthcare/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/healthcare/target_surfaces_delta_last.png"><img src="sectors/healthcare/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/healthcare/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="industrials">
+      <div class="section-header">
+        <div>
+          <h2>Industrials</h2>
+          <p>687 samples | Train 504 | Test 103 | Val 80</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/industrials/summary.json">summary.json</a>
+          <a href="sectors/industrials/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/industrials/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/industrials/pca_separability.png"><img src="sectors/industrials/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/industrials/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/umap_separability.png"><img src="sectors/industrials/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/industrials/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/pca_faceted_by_delta_bucket.png"><img src="sectors/industrials/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/industrials/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/umap_faceted_by_delta_bucket.png"><img src="sectors/industrials/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/industrials/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/pca_separability_company_specific_only.png"><img src="sectors/industrials/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/industrials/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/umap_separability_company_specific_only.png"><img src="sectors/industrials/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/industrials/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/industrials/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/industrials/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/industrials/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/industrials/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/target_surfaces_actual_eps.png"><img src="sectors/industrials/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/industrials/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/industrials/target_surfaces_delta_last.png"><img src="sectors/industrials/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/industrials/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="other">
+      <div class="section-header">
+        <div>
+          <h2>Other</h2>
+          <p>314 samples | Train 191 | Test 90 | Val 33</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/other/summary.json">summary.json</a>
+          <a href="sectors/other/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/other/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/other/pca_separability.png"><img src="sectors/other/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/other/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/umap_separability.png"><img src="sectors/other/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/other/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/pca_faceted_by_delta_bucket.png"><img src="sectors/other/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/other/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/umap_faceted_by_delta_bucket.png"><img src="sectors/other/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/other/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/pca_separability_company_specific_only.png"><img src="sectors/other/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/other/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/umap_separability_company_specific_only.png"><img src="sectors/other/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/other/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/other/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/other/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/other/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/other/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/target_surfaces_actual_eps.png"><img src="sectors/other/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/other/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/other/target_surfaces_delta_last.png"><img src="sectors/other/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/other/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="technology">
+      <div class="section-header">
+        <div>
+          <h2>Technology</h2>
+          <p>1,554 samples | Train 1,081 | Test 261 | Val 212</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/technology/summary.json">summary.json</a>
+          <a href="sectors/technology/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/technology/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/technology/pca_separability.png"><img src="sectors/technology/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/technology/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/umap_separability.png"><img src="sectors/technology/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/technology/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/pca_faceted_by_delta_bucket.png"><img src="sectors/technology/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/technology/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/umap_faceted_by_delta_bucket.png"><img src="sectors/technology/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/technology/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/pca_separability_company_specific_only.png"><img src="sectors/technology/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/technology/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/umap_separability_company_specific_only.png"><img src="sectors/technology/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/technology/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/technology/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/technology/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/technology/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/technology/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/target_surfaces_actual_eps.png"><img src="sectors/technology/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/technology/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/technology/target_surfaces_delta_last.png"><img src="sectors/technology/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/technology/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+
+<section class="section sector-section" id="utilities">
+      <div class="section-header">
+        <div>
+          <h2>Utilities</h2>
+          <p>362 samples | Train 289 | Val 39 | Test 34</p>
+        </div>
+        <div class="section-files">
+          <a href="sectors/utilities/summary.json">summary.json</a>
+          <a href="sectors/utilities/analysis_frame.csv">analysis_frame.csv</a>
+          <a href="sectors/utilities/embedding_coordinates.csv">embedding_coordinates.csv</a>
+        </div>
+      </div>
+      <div class="figure-grid">
+        <figure class="figure-card"><a class="figure-image" href="sectors/utilities/pca_separability.png"><img src="sectors/utilities/pca_separability.png" alt="PCA separability" loading="lazy"></a><figcaption><a href="sectors/utilities/pca_separability.png">PCA separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/umap_separability.png"><img src="sectors/utilities/umap_separability.png" alt="UMAP separability" loading="lazy"></a><figcaption><a href="sectors/utilities/umap_separability.png">UMAP separability</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/pca_faceted_by_delta_bucket.png"><img src="sectors/utilities/pca_faceted_by_delta_bucket.png" alt="PCA by delta bucket" loading="lazy"></a><figcaption><a href="sectors/utilities/pca_faceted_by_delta_bucket.png">PCA by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/umap_faceted_by_delta_bucket.png"><img src="sectors/utilities/umap_faceted_by_delta_bucket.png" alt="UMAP by delta bucket" loading="lazy"></a><figcaption><a href="sectors/utilities/umap_faceted_by_delta_bucket.png">UMAP by delta bucket</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/pca_separability_company_specific_only.png"><img src="sectors/utilities/pca_separability_company_specific_only.png" alt="PCA separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/utilities/pca_separability_company_specific_only.png">PCA separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/umap_separability_company_specific_only.png"><img src="sectors/utilities/umap_separability_company_specific_only.png" alt="UMAP separability, company-specific only" loading="lazy"></a><figcaption><a href="sectors/utilities/umap_separability_company_specific_only.png">UMAP separability, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/pca_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/utilities/pca_faceted_by_delta_bucket_company_specific_only.png" alt="PCA by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/utilities/pca_faceted_by_delta_bucket_company_specific_only.png">PCA by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/umap_faceted_by_delta_bucket_company_specific_only.png"><img src="sectors/utilities/umap_faceted_by_delta_bucket_company_specific_only.png" alt="UMAP by delta bucket, company-specific only" loading="lazy"></a><figcaption><a href="sectors/utilities/umap_faceted_by_delta_bucket_company_specific_only.png">UMAP by delta bucket, company-specific only</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/target_surfaces_actual_eps.png"><img src="sectors/utilities/target_surfaces_actual_eps.png" alt="Target surfaces vs actual EPS" loading="lazy"></a><figcaption><a href="sectors/utilities/target_surfaces_actual_eps.png">Target surfaces vs actual EPS</a></figcaption></figure>
+<figure class="figure-card"><a class="figure-image" href="sectors/utilities/target_surfaces_delta_last.png"><img src="sectors/utilities/target_surfaces_delta_last.png" alt="Target surfaces vs EPS delta" loading="lazy"></a><figcaption><a href="sectors/utilities/target_surfaces_delta_last.png">Target surfaces vs EPS delta</a></figcaption></figure>
+      </div>
+    </section>
+    </section>
+  </main>
+</body>
+</html>

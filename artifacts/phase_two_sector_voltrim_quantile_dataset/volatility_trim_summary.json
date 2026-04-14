@@ -1,0 +1,504 @@
+{
+  "enabled": true,
+  "requested_count": 98,
+  "effective_count": 88,
+  "trimmed_count": 10,
+  "trim_fraction": 0.1,
+  "trim_threshold": 0.540094679208278,
+  "trimmed_tickers": [
+    "PLTR",
+    "SNOW",
+    "MU",
+    "BKNG",
+    "NVDA",
+    "AMD",
+    "TSLA",
+    "AMZN",
+    "NFLX",
+    "NOW"
+  ],
+  "kept_tickers": [
+    "AAPL",
+    "MSFT",
+    "GOOGL",
+    "META",
+    "AVGO",
+    "JPM",
+    "V",
+    "MA",
+    "COST",
+    "WMT",
+    "LLY",
+    "ORCL",
+    "CRM",
+    "CSCO",
+    "IBM",
+    "QCOM",
+    "INTC",
+    "TXN",
+    "AMAT",
+    "ADI",
+    "ABNB",
+    "UBER",
+    "CAT",
+    "HON",
+    "GE",
+    "RTX",
+    "LMT",
+    "DE",
+    "UNH",
+    "ABBV",
+    "JNJ",
+    "PFE",
+    "MRK",
+    "PEP",
+    "KO",
+    "MCD",
+    "HD",
+    "LOW",
+    "NKE",
+    "XOM",
+    "CVX",
+    "COP",
+    "SLB",
+    "BAC",
+    "C",
+    "GS",
+    "MS",
+    "BLK",
+    "AXP",
+    "SCHW",
+    "SPGI",
+    "CME",
+    "CB",
+    "AFL",
+    "PG",
+    "TMO",
+    "ACN",
+    "LIN",
+    "INTU",
+    "ADBE",
+    "PANW",
+    "ISRG",
+    "DHR",
+    "AMGN",
+    "GILD",
+    "SYK",
+    "MDT",
+    "TJX",
+    "ELV",
+    "CI",
+    "CVS",
+    "PM",
+    "MO",
+    "EOG",
+    "MPC",
+    "PSX",
+    "ETN",
+    "UNP",
+    "NSC",
+    "SO",
+    "DUK",
+    "NEE",
+    "CMCSA",
+    "TMUS",
+    "T",
+    "VZ",
+    "DIS",
+    "SBUX"
+  ],
+  "volatility_scores_desc": [
+    {
+      "ticker": "PLTR",
+      "realized_volatility": 0.7018374676696029
+    },
+    {
+      "ticker": "SNOW",
+      "realized_volatility": 0.6067748014141777
+    },
+    {
+      "ticker": "MU",
+      "realized_volatility": 0.6035113309931612
+    },
+    {
+      "ticker": "BKNG",
+      "realized_volatility": 0.5997946096535042
+    },
+    {
+      "ticker": "NVDA",
+      "realized_volatility": 0.5942801605308842
+    },
+    {
+      "ticker": "AMD",
+      "realized_volatility": 0.5913667119430969
+    },
+    {
+      "ticker": "TSLA",
+      "realized_volatility": 0.5749259195875871
+    },
+    {
+      "ticker": "AMZN",
+      "realized_volatility": 0.5517410076740209
+    },
+    {
+      "ticker": "NFLX",
+      "realized_volatility": 0.5456775470771288
+    },
+    {
+      "ticker": "NOW",
+      "realized_volatility": 0.540094679208278
+    },
+    {
+      "ticker": "UBER",
+      "realized_volatility": 0.5094442420762965
+    },
+    {
+      "ticker": "QCOM",
+      "realized_volatility": 0.48113719413876477
+    },
+    {
+      "ticker": "ISRG",
+      "realized_volatility": 0.48111875972545426
+    },
+    {
+      "ticker": "AMAT",
+      "realized_volatility": 0.4799585859966447
+    },
+    {
+      "ticker": "ADBE",
+      "realized_volatility": 0.47943188054241526
+    },
+    {
+      "ticker": "ORCL",
+      "realized_volatility": 0.46530812632261875
+    },
+    {
+      "ticker": "ABNB",
+      "realized_volatility": 0.46470668761301964
+    },
+    {
+      "ticker": "GILD",
+      "realized_volatility": 0.46454651872975333
+    },
+    {
+      "ticker": "INTU",
+      "realized_volatility": 0.4549731795409776
+    },
+    {
+      "ticker": "MS",
+      "realized_volatility": 0.4515023519359403
+    },
+    {
+      "ticker": "SCHW",
+      "realized_volatility": 0.4400717510123358
+    },
+    {
+      "ticker": "AAPL",
+      "realized_volatility": 0.43792571718786444
+    },
+    {
+      "ticker": "ADI",
+      "realized_volatility": 0.4332236456925889
+    },
+    {
+      "ticker": "CRM",
+      "realized_volatility": 0.41550142955286873
+    },
+    {
+      "ticker": "INTC",
+      "realized_volatility": 0.4104982286545526
+    },
+    {
+      "ticker": "TMUS",
+      "realized_volatility": 0.39928548871111547
+    },
+    {
+      "ticker": "UNH",
+      "realized_volatility": 0.3981451601069167
+    },
+    {
+      "ticker": "META",
+      "realized_volatility": 0.39760869414268796
+    },
+    {
+      "ticker": "C",
+      "realized_volatility": 0.3972515892308655
+    },
+    {
+      "ticker": "MPC",
+      "realized_volatility": 0.3925931682644804
+    },
+    {
+      "ticker": "PANW",
+      "realized_volatility": 0.39122312647409346
+    },
+    {
+      "ticker": "CSCO",
+      "realized_volatility": 0.3899596548743516
+    },
+    {
+      "ticker": "EOG",
+      "realized_volatility": 0.3841390061566509
+    },
+    {
+      "ticker": "AVGO",
+      "realized_volatility": 0.37949832870451744
+    },
+    {
+      "ticker": "AMGN",
+      "realized_volatility": 0.3755102124958472
+    },
+    {
+      "ticker": "TXN",
+      "realized_volatility": 0.37509563809320656
+    },
+    {
+      "ticker": "BAC",
+      "realized_volatility": 0.374694234441488
+    },
+    {
+      "ticker": "SBUX",
+      "realized_volatility": 0.37439818549346005
+    },
+    {
+      "ticker": "SLB",
+      "realized_volatility": 0.36104648631096137
+    },
+    {
+      "ticker": "GS",
+      "realized_volatility": 0.3605003827911451
+    },
+    {
+      "ticker": "HD",
+      "realized_volatility": 0.36031940650610667
+    },
+    {
+      "ticker": "AFL",
+      "realized_volatility": 0.35636201843363335
+    },
+    {
+      "ticker": "DHR",
+      "realized_volatility": 0.3546810673957988
+    },
+    {
+      "ticker": "LOW",
+      "realized_volatility": 0.3522915947209832
+    },
+    {
+      "ticker": "CMCSA",
+      "realized_volatility": 0.35041317417543927
+    },
+    {
+      "ticker": "JPM",
+      "realized_volatility": 0.35016284048059765
+    },
+    {
+      "ticker": "LMT",
+      "realized_volatility": 0.34743279895093526
+    },
+    {
+      "ticker": "AXP",
+      "realized_volatility": 0.34674157693029567
+    },
+    {
+      "ticker": "NKE",
+      "realized_volatility": 0.3440269377993894
+    },
+    {
+      "ticker": "TJX",
+      "realized_volatility": 0.344026044434775
+    },
+    {
+      "ticker": "BLK",
+      "realized_volatility": 0.33565201470898903
+    },
+    {
+      "ticker": "PSX",
+      "realized_volatility": 0.33560042938230383
+    },
+    {
+      "ticker": "MSFT",
+      "realized_volatility": 0.33178714173902774
+    },
+    {
+      "ticker": "COP",
+      "realized_volatility": 0.328060644264692
+    },
+    {
+      "ticker": "CME",
+      "realized_volatility": 0.32763323485082985
+    },
+    {
+      "ticker": "SYK",
+      "realized_volatility": 0.3265644517021949
+    },
+    {
+      "ticker": "MA",
+      "realized_volatility": 0.3238966527349753
+    },
+    {
+      "ticker": "CI",
+      "realized_volatility": 0.3210437251509722
+    },
+    {
+      "ticker": "TMO",
+      "realized_volatility": 0.3174331169406536
+    },
+    {
+      "ticker": "DE",
+      "realized_volatility": 0.3154935442036631
+    },
+    {
+      "ticker": "DIS",
+      "realized_volatility": 0.3141405700229245
+    },
+    {
+      "ticker": "MDT",
+      "realized_volatility": 0.31280467197012524
+    },
+    {
+      "ticker": "COST",
+      "realized_volatility": 0.3102841330073242
+    },
+    {
+      "ticker": "CVS",
+      "realized_volatility": 0.3090113864318409
+    },
+    {
+      "ticker": "ELV",
+      "realized_volatility": 0.3087258070049813
+    },
+    {
+      "ticker": "CB",
+      "realized_volatility": 0.3073088056502377
+    },
+    {
+      "ticker": "GOOGL",
+      "realized_volatility": 0.3062587263587984
+    },
+    {
+      "ticker": "ACN",
+      "realized_volatility": 0.29831189730249186
+    },
+    {
+      "ticker": "CAT",
+      "realized_volatility": 0.29592558606928526
+    },
+    {
+      "ticker": "SPGI",
+      "realized_volatility": 0.2958063859689241
+    },
+    {
+      "ticker": "NSC",
+      "realized_volatility": 0.29304446734442957
+    },
+    {
+      "ticker": "WMT",
+      "realized_volatility": 0.2913021028828261
+    },
+    {
+      "ticker": "MCD",
+      "realized_volatility": 0.2888563880803474
+    },
+    {
+      "ticker": "HON",
+      "realized_volatility": 0.2887945629527721
+    },
+    {
+      "ticker": "V",
+      "realized_volatility": 0.2845025330733262
+    },
+    {
+      "ticker": "ETN",
+      "realized_volatility": 0.2826335720285783
+    },
+    {
+      "ticker": "RTX",
+      "realized_volatility": 0.27749468797868304
+    },
+    {
+      "ticker": "LIN",
+      "realized_volatility": 0.27587882068957975
+    },
+    {
+      "ticker": "GE",
+      "realized_volatility": 0.27565091449706336
+    },
+    {
+      "ticker": "LLY",
+      "realized_volatility": 0.27532776410364435
+    },
+    {
+      "ticker": "UNP",
+      "realized_volatility": 0.2750658338548807
+    },
+    {
+      "ticker": "PFE",
+      "realized_volatility": 0.2738861424145681
+    },
+    {
+      "ticker": "ABBV",
+      "realized_volatility": 0.26340887824779186
+    },
+    {
+      "ticker": "CVX",
+      "realized_volatility": 0.2560293122828663
+    },
+    {
+      "ticker": "MO",
+      "realized_volatility": 0.253895536878876
+    },
+    {
+      "ticker": "IBM",
+      "realized_volatility": 0.2530671877024566
+    },
+    {
+      "ticker": "MRK",
+      "realized_volatility": 0.24879002653296
+    },
+    {
+      "ticker": "T",
+      "realized_volatility": 0.24617074382134638
+    },
+    {
+      "ticker": "PEP",
+      "realized_volatility": 0.24193772405164532
+    },
+    {
+      "ticker": "VZ",
+      "realized_volatility": 0.23579373856292948
+    },
+    {
+      "ticker": "PM",
+      "realized_volatility": 0.23421794562925616
+    },
+    {
+      "ticker": "XOM",
+      "realized_volatility": 0.2298284200744819
+    },
+    {
+      "ticker": "KO",
+      "realized_volatility": 0.2278816763883303
+    },
+    {
+      "ticker": "JNJ",
+      "realized_volatility": 0.2275289690938552
+    },
+    {
+      "ticker": "NEE",
+      "realized_volatility": 0.21803784668178178
+    },
+    {
+      "ticker": "DUK",
+      "realized_volatility": 0.21316109712895182
+    },
+    {
+      "ticker": "PG",
+      "realized_volatility": 0.2126202683655597
+    },
+    {
+      "ticker": "SO",
+      "realized_volatility": 0.20019244447332107
+    }
+  ]
+}

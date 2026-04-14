@@ -1,0 +1,63 @@
+{
+  "num_samples": 557,
+  "split_counts": {
+    "train": 390,
+    "test": 87,
+    "val": 80
+  },
+  "sector_counts": {
+    "Communication Services": 557
+  },
+  "delta_bucket_counts": {
+    "flat": 368,
+    "mild_rise": 65,
+    "mild_drop": 55,
+    "sharp_rise": 35,
+    "sharp_drop": 29
+  },
+  "pca_explained_variance_ratio": [
+    0.16134397685527802,
+    0.07726467400789261
+  ],
+  "feature_missingness": {
+    "last_prior_eps": 0.008976660682226212,
+    "baseline_trailing_mean": 0.008976660682226212,
+    "prev_eps_yoy_change": 0.04129263913824058,
+    "revenue_growth_yoy": 0.017953321364452424,
+    "operating_margin": 0.003590664272890485,
+    "vix_close": 0.06463195691202872
+  },
+  "target_surface_correlations": {
+    "last_prior_eps": {
+      "corr_actual_eps": 0.7184044479626372,
+      "corr_delta_last": -0.2887197831335532
+    },
+    "baseline_trailing_mean": {
+      "corr_actual_eps": 0.8035806456841477,
+      "corr_delta_last": -0.020805820190433696
+    },
+    "prev_eps_yoy_change": {
+      "corr_actual_eps": 0.13838124385159215,
+      "corr_delta_last": -0.5032413752711129
+    },
+    "revenue_growth_yoy": {
+      "corr_actual_eps": -0.05779983047588771,
+      "corr_delta_last": 0.0035817971722397405
+    },
+    "operating_margin": {
+      "corr_actual_eps": 0.0839313660245138,
+      "corr_delta_last": -0.006308803323827871
+    },
+    "vix_close": {
+      "corr_actual_eps": -0.0067143074823215075,
+      "corr_delta_last": -0.004485022228399455
+    }
+  },
+  "test_error_by_bucket": {
+    "flat": 0.29157842199999995,
+    "mild_drop": 0.26386652,
+    "mild_rise": 0.7667944673958332,
+    "sharp_drop": 1.9659018933333334,
+    "sharp_rise": 2.0255388825
+  }
+}

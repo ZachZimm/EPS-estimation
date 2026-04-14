@@ -1,0 +1,63 @@
+{
+  "num_samples": 1085,
+  "split_counts": {
+    "train": 775,
+    "test": 174,
+    "val": 136
+  },
+  "sector_counts": {
+    "Healthcare": 1085
+  },
+  "delta_bucket_counts": {
+    "flat": 724,
+    "mild_rise": 134,
+    "mild_drop": 108,
+    "sharp_drop": 55,
+    "sharp_rise": 51
+  },
+  "pca_explained_variance_ratio": [
+    0.1658863127231598,
+    0.06061149388551712
+  ],
+  "feature_missingness": {
+    "last_prior_eps": 0.011981566820276499,
+    "baseline_trailing_mean": 0.011981566820276499,
+    "prev_eps_yoy_change": 0.04976958525345622,
+    "revenue_growth_yoy": 0.020276497695852536,
+    "operating_margin": 0.012903225806451613,
+    "vix_close": 0.07004608294930875
+  },
+  "target_surface_correlations": {
+    "last_prior_eps": {
+      "corr_actual_eps": 0.7151965845784085,
+      "corr_delta_last": -0.35979381149209894
+    },
+    "baseline_trailing_mean": {
+      "corr_actual_eps": 0.7804474662991573,
+      "corr_delta_last": -0.12429011407209382
+    },
+    "prev_eps_yoy_change": {
+      "corr_actual_eps": 0.09452437853637383,
+      "corr_delta_last": -0.4824678810815094
+    },
+    "revenue_growth_yoy": {
+      "corr_actual_eps": -0.06340723353898577,
+      "corr_delta_last": 0.0049521541189380845
+    },
+    "operating_margin": {
+      "corr_actual_eps": 0.07372491643498578,
+      "corr_delta_last": -0.00900840770655955
+    },
+    "vix_close": {
+      "corr_actual_eps": -0.038345239187206774,
+      "corr_delta_last": -0.004073765470534432
+    }
+  },
+  "test_error_by_bucket": {
+    "flat": 0.3103558423877551,
+    "mild_drop": 0.31528880299999995,
+    "mild_rise": 0.5829718311111111,
+    "sharp_drop": 2.71977891,
+    "sharp_rise": 3.1400732765833332
+  }
+}

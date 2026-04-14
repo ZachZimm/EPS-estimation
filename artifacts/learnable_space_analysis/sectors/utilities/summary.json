@@ -1,0 +1,63 @@
+{
+  "num_samples": 362,
+  "split_counts": {
+    "train": 289,
+    "val": 39,
+    "test": 34
+  },
+  "sector_counts": {
+    "Utilities": 362
+  },
+  "delta_bucket_counts": {
+    "flat": 162,
+    "mild_drop": 82,
+    "mild_rise": 82,
+    "sharp_drop": 17,
+    "sharp_rise": 16
+  },
+  "pca_explained_variance_ratio": [
+    0.1859709471464157,
+    0.09058057516813278
+  ],
+  "feature_missingness": {
+    "last_prior_eps": 0.008287292817679558,
+    "baseline_trailing_mean": 0.008287292817679558,
+    "prev_eps_yoy_change": 0.024861878453038673,
+    "revenue_growth_yoy": 0.024861878453038673,
+    "operating_margin": 0.008287292817679558,
+    "vix_close": 0.09392265193370165
+  },
+  "target_surface_correlations": {
+    "last_prior_eps": {
+      "corr_actual_eps": 0.4283292042732894,
+      "corr_delta_last": -0.5319340421384499
+    },
+    "baseline_trailing_mean": {
+      "corr_actual_eps": 0.5992277789381535,
+      "corr_delta_last": -0.16681715027147445
+    },
+    "prev_eps_yoy_change": {
+      "corr_actual_eps": -0.0046005412637202875,
+      "corr_delta_last": -0.4874635738858849
+    },
+    "revenue_growth_yoy": {
+      "corr_actual_eps": 0.010869939580831612,
+      "corr_delta_last": 0.0008468559984898935
+    },
+    "operating_margin": {
+      "corr_actual_eps": -0.19495125040836705,
+      "corr_delta_last": -0.06800556345062121
+    },
+    "vix_close": {
+      "corr_actual_eps": -0.009919281312409373,
+      "corr_delta_last": 0.022157204449920646
+    }
+  },
+  "test_error_by_bucket": {
+    "flat": 0.5264325270000001,
+    "mild_drop": 0.360905794,
+    "mild_rise": 0.6498915927272727,
+    "sharp_drop": 1.22691435,
+    "sharp_rise": 0.9616752000000001
+  }
+}

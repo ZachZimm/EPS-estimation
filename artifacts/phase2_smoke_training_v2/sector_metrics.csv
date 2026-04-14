@@ -1,0 +1,5 @@
+sector_bucket,num_tickers,num_train,num_val,num_test,test_mae,test_rmse,selected_val_baseline,selected_val_baseline_mae
+Consumer Cyclical,1,69,16,12,0.39390918612480164,0.5291298031806946,baseline_trailing_mean,0.303375
+Technology,3,270,46,40,0.49863767623901367,0.7680277824401855,baseline_persistence,0.2576086956521739
+Financial Services,2,192,32,26,0.508933424949646,0.820138156414032,baseline_persistence,0.40312499999999996
+Energy,2,191,33,26,0.959387481212616,1.1746535301208496,baseline_trailing_mean,1.632348484848485

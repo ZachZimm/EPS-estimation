@@ -1,0 +1,82 @@
+{
+  "best_epoch": 1,
+  "stopped_early": false,
+  "epochs_completed": 1,
+  "model_type": "true_linear_quantile_regression",
+  "optimizer": null,
+  "prediction_objective": "quantile",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "linear_include_ticker_fixed_effects": false,
+  "linear_fit_intercept": true,
+  "linear_quantile_alpha": 0.01,
+  "linear_feature_mode": "summary",
+  "linear_quantile_max_train_rows": 2000,
+  "val_mae": 0.7525390386581421,
+  "test_mae": 0.8666390180587769,
+  "test_rmse": 1.566178321838379,
+  "interval_80_coverage": 0.5760869565217391,
+  "interval_80_width": 1.3523920502756601,
+  "val_baselines": {
+    "baseline_persistence": {
+      "mae": 0.7745361111111111,
+      "rmse": 1.4040164993446833,
+      "count": 162
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.9176166666666666,
+      "rmse": 1.715347130408573,
+      "count": 162
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.7569422067901235,
+      "rmse": 1.2149692309100903,
+      "count": 162
+    },
+    "baseline_trend": {
+      "mae": 1.046975462962963,
+      "rmse": 1.8030360245897374,
+      "count": 162
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.0795027784768445,
+      "rmse": 1.61469777871594,
+      "count": 162
+    }
+  },
+  "test_baselines": {
+    "baseline_persistence": {
+      "mae": 0.9079770280898875,
+      "rmse": 1.7916610363713008,
+      "count": 178
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.9285561402439023,
+      "rmse": 1.7020837611772408,
+      "count": 164
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.8637224073033708,
+      "rmse": 1.501939918994631,
+      "count": 178
+    },
+    "baseline_trend": {
+      "mae": 1.2596013162650601,
+      "rmse": 2.3535975690755495,
+      "count": 166
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.2811418471543685,
+      "rmse": 1.843670210267391,
+      "count": 184
+    }
+  },
+  "selected_val_baseline": "baseline_trailing_mean",
+  "selected_val_baseline_mae": 0.7569422067901235,
+  "num_train": 823,
+  "num_val": 162,
+  "num_test": 184
+}

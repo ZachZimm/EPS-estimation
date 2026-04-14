@@ -1,0 +1,190 @@
+{
+  "Communication Services": {
+    "num_tickers": 8,
+    "tickers": [
+      "CMCSA",
+      "DIS",
+      "GOOGL",
+      "META",
+      "NFLX",
+      "T",
+      "TMUS",
+      "VZ"
+    ],
+    "split_counts": {
+      "train": 390,
+      "test": 83,
+      "val": 80
+    }
+  },
+  "Consumer Cyclical": {
+    "num_tickers": 10,
+    "tickers": [
+      "ABNB",
+      "AMZN",
+      "BKNG",
+      "HD",
+      "LOW",
+      "MCD",
+      "NKE",
+      "SBUX",
+      "TJX",
+      "TSLA"
+    ],
+    "split_counts": {
+      "train": 593,
+      "val": 113,
+      "test": 111
+    }
+  },
+  "Consumer Defensive": {
+    "num_tickers": 7,
+    "tickers": [
+      "COST",
+      "KO",
+      "MO",
+      "PEP",
+      "PG",
+      "PM",
+      "WMT"
+    ],
+    "split_counts": {
+      "train": 523,
+      "val": 80,
+      "test": 74
+    }
+  },
+  "Financial Services": {
+    "num_tickers": 14,
+    "tickers": [
+      "AFL",
+      "AXP",
+      "BAC",
+      "BLK",
+      "C",
+      "CB",
+      "CME",
+      "GS",
+      "JPM",
+      "MA",
+      "MS",
+      "SCHW",
+      "SPGI",
+      "V"
+    ],
+    "split_counts": {
+      "train": 678,
+      "test": 152,
+      "val": 144
+    }
+  },
+  "Healthcare": {
+    "num_tickers": 16,
+    "tickers": [
+      "ABBV",
+      "AMGN",
+      "CI",
+      "CVS",
+      "DHR",
+      "ELV",
+      "GILD",
+      "ISRG",
+      "JNJ",
+      "LLY",
+      "MDT",
+      "MRK",
+      "PFE",
+      "SYK",
+      "TMO",
+      "UNH"
+    ],
+    "split_counts": {
+      "train": 775,
+      "test": 174,
+      "val": 136
+    }
+  },
+  "Industrials": {
+    "num_tickers": 9,
+    "tickers": [
+      "CAT",
+      "DE",
+      "ETN",
+      "GE",
+      "HON",
+      "LMT",
+      "NSC",
+      "RTX",
+      "UNP"
+    ],
+    "split_counts": {
+      "train": 504,
+      "test": 93,
+      "val": 80
+    }
+  },
+  "OTHER": {
+    "num_tickers": 8,
+    "tickers": [
+      "COP",
+      "CVX",
+      "EOG",
+      "LIN",
+      "MPC",
+      "PSX",
+      "SLB",
+      "XOM"
+    ],
+    "split_counts": {
+      "train": 191,
+      "test": 76,
+      "val": 33
+    }
+  },
+  "Technology": {
+    "num_tickers": 23,
+    "tickers": [
+      "AAPL",
+      "ACN",
+      "ADBE",
+      "ADI",
+      "AMAT",
+      "AMD",
+      "AVGO",
+      "CRM",
+      "CSCO",
+      "IBM",
+      "INTC",
+      "INTU",
+      "MSFT",
+      "MU",
+      "NOW",
+      "NVDA",
+      "ORCL",
+      "PANW",
+      "PLTR",
+      "QCOM",
+      "SNOW",
+      "TXN",
+      "UBER"
+    ],
+    "split_counts": {
+      "train": 1081,
+      "test": 249,
+      "val": 212
+    }
+  },
+  "Utilities": {
+    "num_tickers": 3,
+    "tickers": [
+      "DUK",
+      "NEE",
+      "SO"
+    ],
+    "split_counts": {
+      "train": 289,
+      "val": 39,
+      "test": 34
+    }
+  }
+}

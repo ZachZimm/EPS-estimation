@@ -1,0 +1,180 @@
+{
+  "Communication Services": {
+    "num_tickers": 7,
+    "tickers": [
+      "CMCSA",
+      "DIS",
+      "GOOGL",
+      "META",
+      "T",
+      "TMUS",
+      "VZ"
+    ],
+    "split_counts": {
+      "train": 338,
+      "test": 71,
+      "val": 64
+    }
+  },
+  "Consumer Cyclical": {
+    "num_tickers": 7,
+    "tickers": [
+      "ABNB",
+      "HD",
+      "LOW",
+      "MCD",
+      "NKE",
+      "SBUX",
+      "TJX"
+    ],
+    "split_counts": {
+      "train": 496,
+      "val": 81,
+      "test": 80
+    }
+  },
+  "Consumer Defensive": {
+    "num_tickers": 7,
+    "tickers": [
+      "COST",
+      "KO",
+      "MO",
+      "PEP",
+      "PG",
+      "PM",
+      "WMT"
+    ],
+    "split_counts": {
+      "train": 523,
+      "val": 80,
+      "test": 74
+    }
+  },
+  "Financial Services": {
+    "num_tickers": 14,
+    "tickers": [
+      "AFL",
+      "AXP",
+      "BAC",
+      "BLK",
+      "C",
+      "CB",
+      "CME",
+      "GS",
+      "JPM",
+      "MA",
+      "MS",
+      "SCHW",
+      "SPGI",
+      "V"
+    ],
+    "split_counts": {
+      "train": 678,
+      "test": 152,
+      "val": 144
+    }
+  },
+  "Healthcare": {
+    "num_tickers": 16,
+    "tickers": [
+      "ABBV",
+      "AMGN",
+      "CI",
+      "CVS",
+      "DHR",
+      "ELV",
+      "GILD",
+      "ISRG",
+      "JNJ",
+      "LLY",
+      "MDT",
+      "MRK",
+      "PFE",
+      "SYK",
+      "TMO",
+      "UNH"
+    ],
+    "split_counts": {
+      "train": 775,
+      "test": 174,
+      "val": 136
+    }
+  },
+  "Industrials": {
+    "num_tickers": 9,
+    "tickers": [
+      "CAT",
+      "DE",
+      "ETN",
+      "GE",
+      "HON",
+      "LMT",
+      "NSC",
+      "RTX",
+      "UNP"
+    ],
+    "split_counts": {
+      "train": 504,
+      "test": 93,
+      "val": 80
+    }
+  },
+  "OTHER": {
+    "num_tickers": 8,
+    "tickers": [
+      "COP",
+      "CVX",
+      "EOG",
+      "LIN",
+      "MPC",
+      "PSX",
+      "SLB",
+      "XOM"
+    ],
+    "split_counts": {
+      "train": 191,
+      "test": 76,
+      "val": 33
+    }
+  },
+  "Technology": {
+    "num_tickers": 17,
+    "tickers": [
+      "AAPL",
+      "ACN",
+      "ADBE",
+      "ADI",
+      "AMAT",
+      "AVGO",
+      "CRM",
+      "CSCO",
+      "IBM",
+      "INTC",
+      "INTU",
+      "MSFT",
+      "ORCL",
+      "PANW",
+      "QCOM",
+      "TXN",
+      "UBER"
+    ],
+    "split_counts": {
+      "train": 823,
+      "test": 184,
+      "val": 162
+    }
+  },
+  "Utilities": {
+    "num_tickers": 3,
+    "tickers": [
+      "DUK",
+      "NEE",
+      "SO"
+    ],
+    "split_counts": {
+      "train": 289,
+      "val": 39,
+      "test": 34
+    }
+  }
+}

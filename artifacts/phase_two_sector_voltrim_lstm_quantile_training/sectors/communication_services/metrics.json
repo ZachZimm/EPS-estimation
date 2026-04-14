@@ -1,0 +1,77 @@
+{
+  "best_epoch": 13,
+  "stopped_early": true,
+  "epochs_completed": 25,
+  "model_type": "lstm",
+  "optimizer": "adamw",
+  "prediction_objective": "quantile",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "val_mae": 0.41987145273014903,
+  "test_mae": 0.7626760005950928,
+  "test_rmse": 1.2678402662277222,
+  "interval_80_coverage": 0.18309859154929578,
+  "interval_80_width": 0.39206957612449017,
+  "val_baselines": {
+    "baseline_persistence": {
+      "mae": 0.43387553125,
+      "rmse": 0.7342592178888742,
+      "count": 64
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.61310325,
+      "rmse": 1.0129084436202762,
+      "count": 64
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.43656050390625,
+      "rmse": 0.6617019801800197,
+      "count": 64
+    },
+    "baseline_trend": {
+      "mae": 0.5035323671875,
+      "rmse": 0.8838888293344578,
+      "count": 64
+    },
+    "baseline_sector_peer_median": {
+      "mae": 0.8729577492771745,
+      "rmse": 1.18294644980203,
+      "count": 64
+    }
+  },
+  "test_baselines": {
+    "baseline_persistence": {
+      "mae": 0.7084282352941176,
+      "rmse": 1.3622104863208224,
+      "count": 68
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.8086075999999999,
+      "rmse": 1.2923477409234843,
+      "count": 60
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.6538387071078432,
+      "rmse": 0.9930947486559453,
+      "count": 68
+    },
+    "baseline_trend": {
+      "mae": 0.9204738548387097,
+      "rmse": 1.8517462614884894,
+      "count": 62
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.208373992565155,
+      "rmse": 1.7864941248664572,
+      "count": 71
+    }
+  },
+  "selected_val_baseline": "baseline_persistence",
+  "selected_val_baseline_mae": 0.43387553125,
+  "num_train": 338,
+  "num_val": 64,
+  "num_test": 71
+}

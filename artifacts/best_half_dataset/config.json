@@ -1,0 +1,32 @@
+{
+  "tickers": [
+    "KO",
+    "V",
+    "AMD",
+    "CSCO",
+    "SLB",
+    "MCD",
+    "XOM",
+    "NKE",
+    "TXN",
+    "MA",
+    "MSFT",
+    "CRM",
+    "AMZN",
+    "GOOGL",
+    "AMAT",
+    "COST",
+    "ADI",
+    "ORCL",
+    "RTX",
+    "ABBV",
+    "TSLA",
+    "PFE",
+    "AAPL",
+    "PEP",
+    "WMT"
+  ],
+  "seq_len": 252,
+  "train_end": "2018-12-31",
+  "val_end": "2022-12-31"
+}

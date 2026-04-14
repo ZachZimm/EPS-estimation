@@ -1,0 +1,82 @@
+{
+  "best_epoch": 1,
+  "stopped_early": false,
+  "epochs_completed": 1,
+  "model_type": "true_linear_regression",
+  "optimizer": null,
+  "prediction_objective": "point",
+  "quantiles": [
+    0.1,
+    0.5,
+    0.9
+  ],
+  "linear_include_ticker_fixed_effects": true,
+  "linear_fit_intercept": true,
+  "linear_quantile_alpha": 0.0001,
+  "linear_feature_mode": "summary",
+  "linear_quantile_max_train_rows": 3000,
+  "val_mae": 10.506932258605957,
+  "test_mae": 12.33031940460205,
+  "test_rmse": 14.492947578430176,
+  "interval_80_coverage": null,
+  "interval_80_width": null,
+  "val_baselines": {
+    "baseline_persistence": {
+      "mae": 0.6616030660377359,
+      "rmse": 1.2477282139537547,
+      "count": 212
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.841197641509434,
+      "rmse": 1.5633511923075336,
+      "count": 212
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.6725955778301886,
+      "rmse": 1.1055971310956136,
+      "count": 212
+    },
+    "baseline_trend": {
+      "mae": 0.8892512971698113,
+      "rmse": 1.6003216039982298,
+      "count": 212
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.0246259449903694,
+      "rmse": 1.5126473669635108,
+      "count": 212
+    }
+  },
+  "test_baselines": {
+    "baseline_persistence": {
+      "mae": 0.8178917468879667,
+      "rmse": 1.6638409320000294,
+      "count": 241
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.983914963800905,
+      "rmse": 1.8073431781169453,
+      "count": 221
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.8407804502074688,
+      "rmse": 1.5217391515251277,
+      "count": 241
+    },
+    "baseline_trend": {
+      "mae": 1.1004925266666667,
+      "rmse": 2.1191513740156394,
+      "count": 225
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.3351609820690633,
+      "rmse": 1.9375503889069683,
+      "count": 249
+    }
+  },
+  "selected_val_baseline": "baseline_persistence",
+  "selected_val_baseline_mae": 0.6616030660377359,
+  "num_train": 1081,
+  "num_val": 212,
+  "num_test": 249
+}

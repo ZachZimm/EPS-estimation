@@ -1,0 +1,160 @@
+{
+  "mode": "per_sector",
+  "num_sector_models": 4,
+  "test_mae": 0.6043150424957275,
+  "test_rmse": 0.878798246383667,
+  "test_count": 104,
+  "test_baselines": {
+    "baseline_persistence": {
+      "mae": 0.4821346186601485,
+      "rmse": 0.7725998353124598,
+      "count": 104
+    },
+    "baseline_seasonal_naive": {
+      "mae": 0.7132740439837082,
+      "rmse": 1.0232243376997028,
+      "count": 104
+    },
+    "baseline_trailing_mean": {
+      "mae": 0.508604565769004,
+      "rmse": 0.7245342495392884,
+      "count": 104
+    },
+    "baseline_trend": {
+      "mae": 0.6936274047375011,
+      "rmse": 1.2498709660187073,
+      "count": 104
+    },
+    "baseline_sector_peer_median": {
+      "mae": 1.828456531724204,
+      "rmse": 2.3175577608242217,
+      "count": 92
+    }
+  },
+  "val_baseline_selection_by_sector": {
+    "Consumer Cyclical": {
+      "name": "baseline_trailing_mean",
+      "mae": 0.303375,
+      "metrics": {
+        "baseline_persistence": {
+          "mae": 0.33634375,
+          "rmse": 0.5496622116127322,
+          "count": 16
+        },
+        "baseline_seasonal_naive": {
+          "mae": 0.3486875,
+          "rmse": 0.48380829752082594,
+          "count": 16
+        },
+        "baseline_trailing_mean": {
+          "mae": 0.303375,
+          "rmse": 0.47258406370255973,
+          "count": 16
+        },
+        "baseline_trend": {
+          "mae": 0.436796875,
+          "rmse": 0.7446586544979854,
+          "count": 16
+        },
+        "baseline_sector_peer_median": {
+          "mae": NaN,
+          "rmse": NaN,
+          "count": 0
+        }
+      }
+    },
+    "Energy": {
+      "name": "baseline_trailing_mean",
+      "mae": 1.632348484848485,
+      "metrics": {
+        "baseline_persistence": {
+          "mae": 1.8666666666666665,
+          "rmse": 2.9003343589902517,
+          "count": 33
+        },
+        "baseline_seasonal_naive": {
+          "mae": 2.1351515151515152,
+          "rmse": 2.9630410259076942,
+          "count": 33
+        },
+        "baseline_trailing_mean": {
+          "mae": 1.632348484848485,
+          "rmse": 2.2958343782651753,
+          "count": 33
+        },
+        "baseline_trend": {
+          "mae": 2.3686363636363637,
+          "rmse": 3.6828306595154037,
+          "count": 33
+        },
+        "baseline_sector_peer_median": {
+          "mae": 1.7330303060737524,
+          "rmse": 2.625545258788476,
+          "count": 33
+        }
+      }
+    },
+    "Financial Services": {
+      "name": "baseline_persistence",
+      "mae": 0.40312499999999996,
+      "metrics": {
+        "baseline_persistence": {
+          "mae": 0.40312499999999996,
+          "rmse": 0.5988113225382433,
+          "count": 32
+        },
+        "baseline_seasonal_naive": {
+          "mae": 0.691875,
+          "rmse": 1.0544251988642912,
+          "count": 32
+        },
+        "baseline_trailing_mean": {
+          "mae": 0.4555468749999999,
+          "rmse": 0.7398747518583804,
+          "count": 32
+        },
+        "baseline_trend": {
+          "mae": 0.48578125,
+          "rmse": 0.736799985579533,
+          "count": 32
+        },
+        "baseline_sector_peer_median": {
+          "mae": 2.1578125140443447,
+          "rmse": 2.305388406159081,
+          "count": 32
+        }
+      }
+    },
+    "Technology": {
+      "name": "baseline_persistence",
+      "mae": 0.2576086956521739,
+      "metrics": {
+        "baseline_persistence": {
+          "mae": 0.2576086956521739,
+          "rmse": 0.35583948506375,
+          "count": 46
+        },
+        "baseline_seasonal_naive": {
+          "mae": 0.3707065217391303,
+          "rmse": 0.4954410365040162,
+          "count": 46
+        },
+        "baseline_trailing_mean": {
+          "mae": 0.29311141304347826,
+          "rmse": 0.36664213083874886,
+          "count": 46
+        },
+        "baseline_trend": {
+          "mae": 0.3401630434782609,
+          "rmse": 0.4641501115877885,
+          "count": 46
+        },
+        "baseline_sector_peer_median": {
+          "mae": 0.7308423873134281,
+          "rmse": 0.8619451365935915,
+          "count": 46
+        }
+      }
+    }
+  }
+}
